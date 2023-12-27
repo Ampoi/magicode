@@ -5,9 +5,14 @@ import { Engine, Runner, Events, Bodies, Body, Composite, World, Vector } from "
 
 const engine = Engine.create()
 
-const player = Bodies.circle(400, 200, 10)
-const ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
-Composite.add(engine.world, [player, ground]);
+const player = Bodies.circle(200, 300, 10)
+player.label = "player"
+const grounds = [
+  Bodies.rectangle(200, 400, 200, 40, { isStatic: true }),
+  Bodies.rectangle(600, 500, 200, 40, { isStatic: true }),
+  Bodies.rectangle(500, 200, 200, 40, { isStatic: true }),
+]
+Composite.add(engine.world, [player, ...grounds])
 
 const keyIsPressed = { a: false, d: false }
 let bodies: Body[]
@@ -33,39 +38,37 @@ function createBullet(playerPosition: Vector, playerAngle: number){
   Composite.add(engine.world, bullet)
 }
 
-//function explode({ x, y }: Vector, size = 10){
-//  /*bodies.forEach((body, i) => {
-//    if( body.isStatic ) return
-//    console.log(i)
-//    const vector = Vector.sub(body.position, { x, y })
-//    //const distance = Vector.magnitude(vector)
-//
-//    const forceDirection = Vector.normalise(vector)
-//    const force = Vector.mult(forceDirection, size)
-//  })*/
-//  console.log("aaa")
-//  Body.applyForce(player, player.position, {x:10, y:0})
-//}
+function explode({ x, y }: Vector, size = 1){
+  bodies.forEach(body => {
+    if( body.isStatic ) return
+    const vector = Vector.sub(body.position, { x, y })
+    const distance = Vector.magnitude(vector)
+
+    if( distance < size * 300 ){
+      const forceDirection = Vector.normalise(vector)
+      const force = Vector.mult(forceDirection, size/400/(distance/10))
+  
+      Body.applyForce(body, { x, y }, force)
+    }
+  })
+}
 
 const runner = Runner.create();
 Runner.run(runner, engine);
 
-function explode(){
-  console.log("aaa")
-  //Body.setPosition(player, {x: 0, y: 0})
-  Body.applyForce(player, player.position, { x: 0, y: -0.01 })
-}
+const explodeQueue: Body[] = []
+Events.on(engine, "beforeUpdate", () => {
+  explodeQueue.forEach(explodeBody => {
+    explode(explodeBody.position, 10)
+    World.remove(engine.world, explodeBody)
+    explodeQueue.splice(0, 1)
+  })
+})
 
 Events.on(engine, "collisionStart", (event) => {
   event.pairs.forEach(({ bodyA, bodyB }) => {
-    if( bodyA.label == "bullet" ){
-      explode()
-      World.remove(engine.world, bodyA)
-    }
-    if( bodyB.label == "bullet" ){
-      explode()
-      World.remove(engine.world, bodyB)
-    }
+    if( bodyA.label == "bullet" ) explodeQueue.push(bodyA)
+    if( bodyB.label == "bullet" ) explodeQueue.push(bodyB)
   })
 })
 
@@ -77,12 +80,26 @@ onMounted(() => {
     p.draw = () => {
       p.background(0)
       bodies = engine.world.bodies
-      p.fill(255)
       bodies.forEach(body => {
         if( body.circleRadius ){
+          switch( body.label ){
+            case "player":
+              p.fill(255, 0, 0)
+              break
+            case "bullet":
+              p.fill(0, 255, 0)
+              break
+            default:
+              p.fill(255)
+              break
+          }
           p.circle(body.position.x, body.position.y, body.circleRadius*2)
         }else{
-          p.rect(body.bounds.min.x, body.bounds.min.y, body.bounds.max.x, body.bounds.max.y)
+          p.fill(255)
+          p.rectMode(p.CENTER)
+          const width = body.bounds.max.x - body.bounds.min.x
+          const height = body.bounds.max.y - body.bounds.min.y
+          p.rect(body.position.x, body.position.y, width, height)
         }
       })
 
