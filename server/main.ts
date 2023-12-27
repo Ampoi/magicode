@@ -1,23 +1,11 @@
-import express from 'express';
-import { createServer } from "node:http";
-import { Server } from 'socket.io';
-
 import Matter from "matter-js"
 const { Engine, Runner, Events, Body, Bodies, Composite, World, Vector } = Matter
 
 import { SendBody } from "../model/sendBody"
+import { createServer } from "./infra/socket.io"
 
 type Body = Matter.Body
 type Vector = Matter.Vector
-
-const app = express();
-const server = createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "http://localhost:5173",
-        methods: ["GET", "POST"]
-    }
-});
 
 const playerApoint = { x: 200, y: 300 }
 const playerBpoint = { x: 400, y: 300 }
@@ -128,8 +116,6 @@ class Room {
 
 const rooms: { [key: string]: Room } = { a: new Room() };
 
-app.get('/', (req, res) => res.send("This is magicode server"));
-
 function createUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (a) => {
         let r = (new Date().getTime() + Math.random() * 16) % 16 | 0, v = a == 'x' ? r : (r & 0x3 | 0x8);
@@ -137,7 +123,7 @@ function createUID() {
     });
 }
 
-io.on('connection', (socket) => {
+createServer(9648, (socket) => {
     const uid = createUID()
     let joiningRoomID: string | undefined
     
@@ -159,10 +145,4 @@ io.on('connection', (socket) => {
         console.log("ゲームが開始されました！")
         rooms[joiningRoomID].start()
     })
-});
-
-const PORT = 9648
-
-server.listen(PORT, () => {
-    console.log(`server running at http://localhost:${PORT}`);
-});
+})
