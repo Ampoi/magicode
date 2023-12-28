@@ -25,9 +25,11 @@ function explode(bodies: Body[], { x, y }: Vector, size = 1) {
     })
 }
 
+type DataUpdateCallBack = (bodies: Body[]) => void
+
 class Room {
-    playerA?: Body
-    playerB?: Body
+    playerA?: { body: Body, dataUpdateCallback: DataUpdateCallBack }
+    playerB?: { body: Body, dataUpdateCallback: DataUpdateCallBack }
     private readonly engine = Engine.create()
     private readonly runner = Runner.create()
 
@@ -36,8 +38,6 @@ class Room {
         Bodies.rectangle(600, 500, 200, 40, { isStatic: true }),
         Bodies.rectangle(500, 200, 200, 40, { isStatic: true }),
     ]
-
-    private dataUpdateCallback?: (bodies: Body[]) => void
 
     constructor() {
         const explodeQueue: Body[] = []
@@ -58,14 +58,19 @@ class Room {
         })
     }
 
-    join(uid: string, dataUpdateCallback: Room["dataUpdateCallback"]) {
-        this.dataUpdateCallback = dataUpdateCallback
+    join(uid: string, dataUpdateCallback: DataUpdateCallBack) {
         if (!this.playerA) {
             console.log(`ユーザー[${uid}]が部屋にプレイヤーAとして入室しました！`)
-            this.playerA = Bodies.circle(playerApoint.x, playerApoint.y, 10, { label: "player" })
+            this.playerA = {
+                body: Bodies.circle(playerApoint.x, playerApoint.y, 10, { label: "player" }),
+                dataUpdateCallback
+            }
         } else if (!this.playerB) {
             console.log(`ユーザー[${uid}]が部屋にプレイヤーBとして入室しました！`)
-            this.playerB = Bodies.circle(playerBpoint.x, playerBpoint.y, 10, { label: "player" })
+            this.playerB = {
+                body: Bodies.circle(playerBpoint.x, playerBpoint.y, 10, { label: "player" }),
+                dataUpdateCallback
+            }
         } else {
             throw new Error("定員オーバーです！")
         }
@@ -78,14 +83,21 @@ class Room {
         if (!this.playerA) throw new Error("playerAがいません！")
         if (!this.playerB) throw new Error("playerBがいません！")
 
-        Composite.add(this.engine.world, [this.playerA, this.playerB, ...this.grounds])
+        Composite.add(this.engine.world, [this.playerA.body, this.playerB.body, ...this.grounds])
         Runner.run(this.runner, this.engine)
 
         this.sendTick = setInterval(() => {
             if (!this.playerA) throw new Error("playerAがいません！")
             if (!this.playerB) throw new Error("playerBがいません！")
-            if(this.dataUpdateCallback) this.dataUpdateCallback([ this.playerA, this.playerB, ...this.grounds ])
+
+            const bodies = [ this.playerA.body, this.playerB.body, ...this.grounds ]
+            this.playerA.dataUpdateCallback(bodies)
+            this.playerB.dataUpdateCallback(bodies)
         }, 1000/this.tps)
+    }
+
+    stop(){
+        clearInterval(this.sendTick)
     }
     
     createBullet(playerName: "playerA" | "playerB") {
@@ -95,19 +107,19 @@ class Room {
         const player = this[playerName]
         if( !player ) throw new Error("プレイヤーがいません！！")
 
-        if ( !player.circleRadius ) throw new Error("プレイヤーが丸じゃないです！！(内部的なエラーの可能性しかありません)")
+        if ( !player.body.circleRadius ) throw new Error("プレイヤーが丸じゃないです！！(内部的なエラーの可能性しかありません)")
     
         const bullet = Bodies.circle(
-            player.position.x + Math.cos(player.angle) * (player.circleRadius + distance),
-            player.position.y - Math.sin(player.angle) * (player.circleRadius + distance),
+            player.body.position.x + Math.cos(player.body.angle) * (player.body.circleRadius + distance),
+            player.body.position.y - Math.sin(player.body.angle) * (player.body.circleRadius + distance),
             bulletSize
         )
         bullet.label = "bullet"
     
         const bulletForceSize = 0.005
         Body.applyForce(bullet, bullet.position, {
-            x: Math.cos(player.angle) * bulletForceSize,
-            y: -Math.sin(player.angle) * bulletForceSize
+            x: Math.cos(player.body.angle) * bulletForceSize,
+            y: -Math.sin(player.body.angle) * bulletForceSize
         })
     
         Composite.add(this.engine.world, bullet)
