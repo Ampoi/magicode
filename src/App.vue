@@ -31,6 +31,9 @@ socket.on("updateData", (newBodies: SendBody[]) => bodies = newBodies)
 
 const keyIsPressed = { a: false, d: false }
 
+let roomData = { playerA: false, playerB: false }
+socket.on("updateRoomData", (newRoomData) => roomData = newRoomData)
+
 function drawGame(p: p5) {
   p.background(0)
   bodies?.forEach(body => {
@@ -89,8 +92,9 @@ onMounted(() => {
         p.textSize(100)
         p.text("MagiCode", p.width / 2, p.height / 2)
 
-        drawPlayer(p, "#ff4733", "Player A", false, 300, 400)
-        drawPlayer(p, "#3080ff", "Player B", false, 500, 400)
+        console.log(roomData)
+        drawPlayer(p, "#ff4733", "Player A", roomData.playerA, 300, 400)
+        drawPlayer(p, "#3080ff", "Player B", roomData.playerB, 500, 400)
       }
     }
     p.keyPressed = (event: KeyboardEvent) => {

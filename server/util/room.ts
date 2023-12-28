@@ -2,12 +2,18 @@ import { Engine, Runner, Events, Body, Bodies, Composite, World, Vector } from "
 import { createBullet } from "./createBullet"
 import { explode } from "./explode"
 
-type DataUpdateCallBack = (bodies: Body[]) => void
+type GameUpdateCallBack = (bodies: Body[]) => void
+type RoomUpdateCallBack = (data: {
+    playerA: boolean
+    playerB: boolean
+}) => void
+
 type Player = {
     uid: string
     body: Body
     isGameStartCallback: (isGameStarted: boolean) => void
-    dataUpdateCallback: DataUpdateCallBack
+    gameUpdateCallback: GameUpdateCallBack
+    roomUpdateCallback: RoomUpdateCallBack
 }
 
 const playerApoint = { x: 200, y: 300 }
@@ -45,15 +51,20 @@ export class Room {
         })
     }
 
-    join(uid: string, isGameStartCallback: (isGameStarted: boolean) => void, dataUpdateCallback: DataUpdateCallBack) {
+    join(uid: string, isGameStartCallback: (isGameStarted: boolean) => void, gameUpdateCallback: GameUpdateCallBack, roomUpdateCallback: RoomUpdateCallBack) {
         if (!this.playerA) {
             console.log(`ユーザー[${uid}]が部屋にプレイヤーAとして入室しました！`)
             this.playerA = {
                 uid,
                 body: Bodies.circle(playerApoint.x, playerApoint.y, 10, { label: "player" }),
                 isGameStartCallback,
-                dataUpdateCallback
+                gameUpdateCallback,
+                roomUpdateCallback
             }
+
+            if( this.playerA ) this.playerA.roomUpdateCallback({ playerA: !!this.playerA, playerB: !!this.playerB })
+            if( this.playerB ) this.playerB.roomUpdateCallback({ playerA: !!this.playerA, playerB: !!this.playerB })
+
             return "playerA"
         } else if (!this.playerB) {
             console.log(`ユーザー[${uid}]が部屋にプレイヤーBとして入室しました！`)
@@ -61,8 +72,13 @@ export class Room {
                 uid,
                 body: Bodies.circle(playerBpoint.x, playerBpoint.y, 10, { label: "player" }),
                 isGameStartCallback,
-                dataUpdateCallback
+                gameUpdateCallback,
+                roomUpdateCallback
             }
+
+            if( this.playerA ) this.playerA.roomUpdateCallback({ playerA: !!this.playerA, playerB: !!this.playerB })
+            if( this.playerB ) this.playerB.roomUpdateCallback({ playerA: !!this.playerA, playerB: !!this.playerB })
+
             return "playerB"
         } else {
             throw new Error("定員オーバーです！")
@@ -73,6 +89,9 @@ export class Room {
         this.stop()
         const playerName = this.getPlayerNameFromUID(uid)
         this[playerName] = undefined
+
+        if( this.playerA ) this.playerA.roomUpdateCallback({ playerA: !!this.playerA, playerB: !!this.playerB })
+        if( this.playerB ) this.playerB.roomUpdateCallback({ playerA: !!this.playerA, playerB: !!this.playerB })
     }
 
     getPlayerNameFromUID(uid: string){
@@ -106,8 +125,8 @@ export class Room {
             if (!this.playerB) throw new Error("playerBがいません！")
 
             const bodies = Composite.allBodies(this.engine.world)
-            this.playerA.dataUpdateCallback(bodies)
-            this.playerB.dataUpdateCallback(bodies)
+            this.playerA.gameUpdateCallback(bodies)
+            this.playerB.gameUpdateCallback(bodies)
         }, 1000/this.tps)
     }
 

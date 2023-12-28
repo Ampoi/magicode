@@ -19,7 +19,8 @@ createServer(9648, (socket) => {
                     return { angle, position, circleRadius, bounds, label }
                 })
                 socket.emit("updateData", sendData)
-            }
+            },
+            (data) => { socket.emit("updateRoomData", data) }
         )
         joiningRoomID = roomID
         socket.emit("joinedRoom", roomID, player)
