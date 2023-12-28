@@ -1,6 +1,7 @@
 <template>
   <button @click="() => socket.emit('joinRoom', 'a')">joinRoom</button>
   <button @click="() => socket.emit('start')">start</button>
+  <input type="text">
 </template>
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
@@ -8,7 +9,7 @@ import io from "socket.io-client"
 import p5 from "p5"
 import { SendBody } from "../model/sendBody"
 
-const socket = io("http://localhost:9648")
+const socket = io("http://magicode-server.ampoi.net")
 socket.on("connect", () => console.log("⚡️サーバーと接続できました！"))
 socket.on("connect_error", (error) => { throw error })
 
@@ -112,7 +113,6 @@ onMounted(() => {
         p.textAlign(p.CENTER)
         p.textSize(100)
         p.text("MagiCode", p.width / 2, p.height / 2 - 100)
-        console.log(roomData)
         if( roomData ){
           drawPlayer(p, "#ff4733", "Player A", roomData.logginedPlayer.playerA, 300, 300, "playerA" == roomData.playerName)
           drawPlayer(p, "#3080ff", "Player B", roomData.logginedPlayer.playerB, 500, 300, "playerB" == roomData.playerName)
