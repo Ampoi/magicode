@@ -16,8 +16,8 @@ let roomData: {
   id: string
   playerName: "playerA" | "playerB"
   logginedPlayer: {
-    playerA: boolean
-    playerB: boolean
+    playerA?: { point: number }
+    playerB?: { point: number }
   }
 } | undefined
 
@@ -29,7 +29,6 @@ socket.on("joinedRoom", (newRoomID: string, newPlayer: "playerA" | "playerB", lo
     playerName: newPlayer,
     logginedPlayer
   }
-  roomData.logginedPlayer[newPlayer] = true
 })
 socket.on("isGameStarted", (newIsGameStarted: boolean) => isGameStarted.value = newIsGameStarted)
 
@@ -75,23 +74,25 @@ function drawGame(p: p5) {
   if (roomData && isGameStarted.value) socket.emit("setAngle", p.mouseX, p.mouseY)
 }
 
-function drawPlayer(p: p5, hex: string, name: string, isLogin: boolean, x: number, y: number, isMe: boolean){
+function drawPlayer(p: p5, hex: string, name: string, player: { point: number } | undefined, x: number, y: number, isMe: boolean){
   const color = p.color(hex)
-  color.setAlpha(isLogin ? 255 : 80)
+  color.setAlpha(!!player ? 255 : 80)
   p.fill(color)
   p.circle(x, y, 50)
   p.arc(x, y + 70, 80, 80, p.PI, 0);
   p.textSize(30)
   p.text(name, x, y + 100)
+  p.text(player?.point ?? 0, x, y+140)
+
   if( isMe ){
     p.noFill()
     p.stroke(255)
     p.strokeWeight(5)
     p.rectMode(p.CENTER)
-    p.rect(x, y+60, 180, 220)
+    p.rect(x, y+70, 180, 240)
     p.noStroke()
     p.fill(255)
-    p.text("You", x, y + 150)
+    p.text("You", x, y + 180)
   }
 }
 

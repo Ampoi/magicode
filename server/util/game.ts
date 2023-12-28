@@ -28,6 +28,8 @@ export class Game {
         Bodies.rectangle(500, 200, 200, 40, { isStatic: true }),
     ]
 
+    private stop = false
+
     constructor( onGameEndCallback: OnGameEndCallback ) {
         const explodeQueue: Body[] = []
 
@@ -39,20 +41,25 @@ export class Game {
                 explodeQueue.splice(0, 1)
             })
 
-            const isPlayerAFallOut =
-                this.playerA.position.x < bounds.x.min || bounds.x.max < this.playerA.position.x ||
-                this.playerA.position.y < bounds.y.min || bounds.y.max < this.playerA.position.y
-            
-            const isPlayerBFallOut =
-                this.playerB.position.x < bounds.x.min || bounds.x.max < this.playerB.position.x ||
-                this.playerB.position.y < bounds.y.min || bounds.y.max < this.playerB.position.y
-            
-            if( isPlayerAFallOut && isPlayerBFallOut ){
-                onGameEndCallback()
-            }else if( isPlayerAFallOut ){
-                onGameEndCallback("playerB")
-            }else if( isPlayerBFallOut ){
-                onGameEndCallback("playerA")
+            if( !this.stop ){
+                const isPlayerAFallOut =
+                    this.playerA.position.x < bounds.x.min || bounds.x.max < this.playerA.position.x ||
+                    this.playerA.position.y < bounds.y.min || bounds.y.max < this.playerA.position.y
+                
+                const isPlayerBFallOut =
+                    this.playerB.position.x < bounds.x.min || bounds.x.max < this.playerB.position.x ||
+                    this.playerB.position.y < bounds.y.min || bounds.y.max < this.playerB.position.y
+                
+                if( isPlayerAFallOut && isPlayerBFallOut ){
+                    onGameEndCallback()
+                    this.stop = true
+                }else if( isPlayerAFallOut ){
+                    onGameEndCallback("playerB")
+                    this.stop = true
+                }else if( isPlayerBFallOut ){
+                    onGameEndCallback("playerA")
+                    this.stop = true
+                }
             }
         })
 
