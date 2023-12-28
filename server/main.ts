@@ -57,7 +57,7 @@ createServer(9648, (socket) => {
         if( !joiningRoomID ) throw new Error("部屋に入ってません！")
         if( !rooms[joiningRoomID].started ) throw new Error("ゲームは始まってません！")
 
-        rooms[joiningRoomID].createBullet(uid)
+        rooms[joiningRoomID].shoot(uid)
     })
 
     socket.on("disconnect", () => {
