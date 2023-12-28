@@ -29,7 +29,6 @@ createServer(9648, (socket) => {
     })
 
     socket.on("leaveRoom", () => {
-        console.log("aaa?")
         if( !joiningRoomID ) throw new Error("そもそも部屋に入っていません")
         rooms[joiningRoomID].leave(uid)
     })

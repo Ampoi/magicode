@@ -10,20 +10,21 @@ type RoomUpdateCallBack = (data: {
 
 type Player = {
     uid: string
-    body: Body
     isGameStartCallback: (isGameStarted: boolean) => void
     gameUpdateCallback: GameUpdateCallBack
     roomUpdateCallback: RoomUpdateCallBack
 }
 
-const playerApoint = { x: 200, y: 300 }
-const playerBpoint = { x: 500, y: 100 }
+//const playerName = this.getPlayerNameFromUID(uid)
+//const player = this[playerName]
+//if( !player ) throw new Error("プレイヤーがいません！！")
 
-export class Room {
-    playerA?: Player
-    playerB?: Player
-    private readonly engine = Engine.create()
-    private readonly runner = Runner.create()
+export class Game {
+    private readonly engine =  Engine.create()
+    private readonly runner =  Runner.create()
+
+    private readonly playerA = Bodies.circle(200, 300, 10, { label: "player" })
+    private readonly playerB = Bodies.circle(500, 100, 10, { label: "player" })
 
     readonly grounds = [
         Bodies.rectangle(200, 400, 200, 40, { isStatic: true }),
@@ -49,14 +50,55 @@ export class Room {
                 if (bodyB.label == "bullet") explodeQueue.push(bodyB)
             })
         })
+
+        Composite.add(this.engine.world, [this.playerA, this.playerB, ...this.grounds])
+        Runner.run(this.runner, this.engine)
     }
+
+    get bodies(){
+        return Composite.allBodies(this.engine.world)
+    }
+
+    summonBullet(playerName: "playerA" | "playerB") {
+        const player = this[playerName]
+        const bullet = createBullet(player)
+        Composite.add(this.engine.world, bullet)
+    }
+
+    move(playerName: "playerA" | "playerB", direction: "up" | "left" | "right"){
+        const player = this[playerName]
+        const speed = 4
+
+        switch( direction ){
+            case "left":
+                Body.setVelocity(player, { x: -speed, y:player.velocity.y })
+                break
+            case "right":
+                Body.setVelocity(player, { x: speed, y:player.velocity.y })
+                break
+            case "up":
+                Body.applyForce(player, player.position, { x: 0, y: -0.01 })
+                break
+        }
+    }
+
+    lookAt(playerName: "playerA" | "playerB", { x, y }: Vector){
+        const player = this[playerName]
+
+        const angle = Math.atan2(player.position.y - y, x - player.position.x);
+        Body.setAngle(player, angle);
+    }
+}
+
+export class Room {
+    playerA?: Player
+    playerB?: Player
 
     join(uid: string, isGameStartCallback: (isGameStarted: boolean) => void, gameUpdateCallback: GameUpdateCallBack, roomUpdateCallback: RoomUpdateCallBack) {
         if (!this.playerA) {
             console.log(`ユーザー[${uid}]が部屋にプレイヤーAとして入室しました！`)
             this.playerA = {
                 uid,
-                body: Bodies.circle(playerApoint.x, playerApoint.y, 10, { label: "player" }),
                 isGameStartCallback,
                 gameUpdateCallback,
                 roomUpdateCallback
@@ -70,7 +112,6 @@ export class Room {
             console.log(`ユーザー[${uid}]が部屋にプレイヤーBとして入室しました！`)
             this.playerB = {
                 uid,
-                body: Bodies.circle(playerBpoint.x, playerBpoint.y, 10, { label: "player" }),
                 isGameStartCallback,
                 gameUpdateCallback,
                 roomUpdateCallback
@@ -87,8 +128,10 @@ export class Room {
 
     leave(uid: string){
         this.stop()
+
         const playerName = this.getPlayerNameFromUID(uid)
         this[playerName] = undefined
+        console.log("プレイヤーが退出しました")
 
         if( this.playerA ) this.playerA.roomUpdateCallback({ playerA: !!this.playerA, playerB: !!this.playerB })
         if( this.playerB ) this.playerB.roomUpdateCallback({ playerA: !!this.playerA, playerB: !!this.playerB })
@@ -107,76 +150,59 @@ export class Room {
     private sendTick?: NodeJS.Timeout
     private readonly tps = 40
 
-    started = false
-
+    private game?: Game
+    public get started(){ return !!this.game }
+    
     start() {
         if (!this.playerA) throw new Error("playerAがいません！")
         if (!this.playerB) throw new Error("playerBがいません！")
 
-        Composite.add(this.engine.world, [this.playerA.body, this.playerB.body, ...this.grounds])
-        Runner.run(this.runner, this.engine)
+        this.game = new Game()
 
         this.playerA.isGameStartCallback(true)
         this.playerB.isGameStartCallback(true)
-        this.started = true
 
         this.sendTick = setInterval(() => {
-            if (!this.playerA) throw new Error("playerAがいません！")
-            if (!this.playerB) throw new Error("playerBがいません！")
+            if( !this.game ) throw new Error("今開催されているゲームがないです")
+            const bodies = this.game.bodies
 
-            const bodies = Composite.allBodies(this.engine.world)
-            this.playerA.gameUpdateCallback(bodies)
-            this.playerB.gameUpdateCallback(bodies)
+            this.playerA?.gameUpdateCallback(bodies)
+            this.playerB?.gameUpdateCallback(bodies)
         }, 1000/this.tps)
     }
 
     stop(){
         clearInterval(this.sendTick)
-        this.started = false
+        this.game = undefined
+
         if( this.playerA ) this.playerA.isGameStartCallback(false)
         if( this.playerB ) this.playerB.isGameStartCallback(false)
     }
-    
-    createBullet(uid: string) {
-        if( !this.started ) throw new Error("ゲームが開始されてません！")
-
-        const playerName = this.getPlayerNameFromUID(uid)
-        const player = this[playerName]
-        if( !player ) throw new Error("プレイヤーがいません！！")
-
-        const bullet = createBullet(player.body)
-        Composite.add(this.engine.world, bullet)
-    }
 
     move(uid: string, direction: "up" | "left" | "right"){
-        if( !this.started ) throw new Error("ゲームが開始されてません！")
+        if( !this.game ) throw new Error("ゲームが開始されてません！")
 
         const playerName = this.getPlayerNameFromUID(uid)
-        const player = this[playerName]
-        if( !player ) throw new Error("プレイヤーがいません！！")
+        if( !playerName ) throw new Error("プレイヤーがいません！")
 
-        const speed = 4
-        switch( direction ){
-            case "left":
-                Body.setVelocity(player.body, { x: -speed, y:player.body.velocity.y })
-                break
-            case "right":
-                Body.setVelocity(player.body, { x: speed, y:player.body.velocity.y })
-                break
-            case "up":
-                Body.applyForce(player.body, player.body.position, { x: 0, y: -0.01 })
-                break
-        }
+        this.game?.move( playerName, direction )
     }
 
     lookAt(uid: string, { x, y }: Vector){
-        if( !this.started ) throw new Error("ゲームが開始されてません！")
+        if( !this.game ) throw new Error("ゲームが開始されてません！")
 
         const playerName = this.getPlayerNameFromUID(uid)
-        const player = this[playerName]
-        if( !player ) throw new Error("プレイヤーがいません！！")
+        if( !playerName ) throw new Error("プレイヤーがいません！！")
 
-        const angle = Math.atan2(player.body.position.y - y, x - player.body.position.x);
-        Body.setAngle(player.body, angle);
+        this.game.lookAt(playerName, { x, y })
+    }
+
+    createBullet(uid: string){
+        if( !this.game ) throw new Error("ゲームが開始されてません！")
+
+        const playerName = this.getPlayerNameFromUID(uid)
+        if( !playerName ) throw new Error("プレイヤーがいません！！")
+
+        this.game.summonBullet(playerName)
     }
 }
