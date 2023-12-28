@@ -78,7 +78,7 @@ export class Room {
 
             if( this.playerA ) this.playerA.roomUpdateCallback({ playerA: !!this.playerA, playerB: !!this.playerB })
             if( this.playerB ) this.playerB.roomUpdateCallback({ playerA: !!this.playerA, playerB: !!this.playerB })
-
+            
             return "playerB"
         } else {
             throw new Error("定員オーバーです！")

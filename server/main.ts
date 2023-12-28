@@ -20,10 +20,12 @@ createServer(9648, (socket) => {
                 })
                 socket.emit("updateData", sendData)
             },
-            (data) => { socket.emit("updateRoomData", data) }
+            (data) => {
+                socket.emit("updateRoomData", data)
+            }
         )
         joiningRoomID = roomID
-        socket.emit("joinedRoom", roomID, player)
+        socket.emit("joinedRoom", roomID, player, { playerA: !!rooms[roomID].playerA, playerB: !!rooms[roomID].playerB })
     })
 
     socket.on("leaveRoom", () => {

@@ -1,9 +1,4 @@
 <template>
-  <p style="color: white;">
-    {{ roomID }}
-    {{ player }}
-    {{ isGameStarted }}
-  </p>
   <button @click="() => socket.emit('joinRoom', 'a')">joinRoom</button>
   <button @click="() => socket.emit('start')">start</button>
 </template>
@@ -17,12 +12,24 @@ const socket = io("http://localhost:9648")
 socket.on("connect", () => console.log("⚡️サーバーと接続できました！"))
 socket.on("connect_error", (error) => { throw error })
 
-const roomID = ref<string>()
-const player = ref<"playerA" | "playerB">()
+let roomData: {
+  id: string
+  playerName: "playerA" | "playerB"
+  logginedPlayer: {
+    playerA: boolean
+    playerB: boolean
+  }
+} | undefined
+
 const isGameStarted = ref<boolean>(false)
-socket.on("joinedRoom", (newRoomID: string, newPlayer: "playerA" | "playerB") => {
-  roomID.value = newRoomID
-  player.value = newPlayer
+socket.on("joinedRoom", (newRoomID: string, newPlayer: "playerA" | "playerB", logginedPlayer) => {
+  console.log("joinedRoom")
+  roomData = {
+    id: newRoomID,
+    playerName: newPlayer,
+    logginedPlayer
+  }
+  roomData.logginedPlayer[newPlayer] = true
 })
 socket.on("isGameStarted", (newIsGameStarted: boolean) => isGameStarted.value = newIsGameStarted)
 
@@ -31,8 +38,11 @@ socket.on("updateData", (newBodies: SendBody[]) => bodies = newBodies)
 
 const keyIsPressed = { a: false, d: false }
 
-let roomData = { playerA: false, playerB: false }
-socket.on("updateRoomData", (newRoomData) => roomData = newRoomData)
+socket.on("updateRoomData", (newRoomData) => {
+  if( !roomData ) throw new Error("部屋に入る前にデータの更新を受け取りました")
+  console.log("updateRoomData")
+  roomData.logginedPlayer = newRoomData
+})
 
 function drawGame(p: p5) {
   p.background(0)
@@ -59,10 +69,10 @@ function drawGame(p: p5) {
     }
   })
 
-  if (roomID.value && isGameStarted.value && keyIsPressed.a) socket.emit("move", "left")
-  if (roomID.value && isGameStarted.value && keyIsPressed.d) socket.emit("move", "right")
+  if (roomData && isGameStarted.value && keyIsPressed.a) socket.emit("move", "left")
+  if (roomData && isGameStarted.value && keyIsPressed.d) socket.emit("move", "right")
 
-  if (roomID.value && isGameStarted.value) socket.emit("setAngle", p.mouseX, p.mouseY)
+  if (roomData && isGameStarted.value) socket.emit("setAngle", p.mouseX, p.mouseY)
 }
 
 function drawPlayer(p: p5, hex: string, name: string, isLogin: boolean, x: number, y: number, isMe: boolean){
@@ -101,10 +111,11 @@ onMounted(() => {
         p.textAlign(p.CENTER)
         p.textSize(100)
         p.text("MagiCode", p.width / 2, p.height / 2 - 100)
-
         console.log(roomData)
-        drawPlayer(p, "#ff4733", "Player A", roomData.playerA, 300, 300, "playerA" == player.value)
-        drawPlayer(p, "#3080ff", "Player B", roomData.playerB, 500, 300, "playerB" == player.value)
+        if( roomData ){
+          drawPlayer(p, "#ff4733", "Player A", roomData.logginedPlayer.playerA, 300, 300, "playerA" == roomData.playerName)
+          drawPlayer(p, "#3080ff", "Player B", roomData.logginedPlayer.playerB, 500, 300, "playerB" == roomData.playerName)
+        }
       }
     }
     p.keyPressed = (event: KeyboardEvent) => {
@@ -119,7 +130,7 @@ onMounted(() => {
       }
     }
     p.mouseClicked = () => {
-      if (roomID.value && isGameStarted.value) socket.emit("shoot")
+      if (roomData && isGameStarted.value) socket.emit("shoot")
     }
   })
 })
