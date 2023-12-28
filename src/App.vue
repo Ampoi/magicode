@@ -9,7 +9,9 @@ import io from "socket.io-client"
 import p5 from "p5"
 import { SendBody } from "../model/sendBody"
 
-const socket = io("http://magicode-server.ampoi.net")
+const serverUrl = "http://localhost:9648"//"https://magicode-server.ampoi.net"
+
+const socket = io(serverUrl)
 socket.on("connect", () => console.log("⚡️サーバーと接続できました！"))
 socket.on("connect_error", (error) => { throw error })
 
