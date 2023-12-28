@@ -1,63 +1,40 @@
 <template>
-  <button @click="() => socket.emit('joinRoom', 'a')">joinRoom</button>
-  <button @click="() => socket.emit('start')">start</button>
-  <input type="text" v-model="serverUrl">
+  <button @click="startGame">start</button>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import io from "socket.io-client"
+import { onMounted } from 'vue';
 import p5 from "p5"
-import { SendBody } from "../model/sendBody"
+import { Room } from "./util/room"
+import { Body } from 'matter-js';
+import { RoomData } from "./util/room"
+import { createUID } from "./util/createUID"
 
-const serverUrl = computed<string>({
-  get(){
-    const newURL = localStorage.getItem("server-url")
-    if( newURL ){
-      return newURL
-    }else{
-      localStorage.setItem("server-url", "https://magicode-server.ampoi.net")
-      return "https://magicode-server.ampoi.net"
-    }
-  },
-  set(newURL){
-    localStorage.setItem("server-url", newURL)
-  }
-})
+const room = new Room()
+const uid = createUID()
 
-const socket = io(serverUrl.value)
-socket.on("connect", () => console.log("⚡️サーバーと接続できました！"))
-socket.on("connect_error", (error) => { throw error })
+let bodies: Body[] | null
+function onBodiesUpdate( newBodies: Body[] ){ bodies = newBodies }
+let roomData: RoomData | null
+function onRoomDataUpdate( newRoomData: RoomData ){ roomData = newRoomData }
 
-let roomData: {
-  id: string
-  playerName: "playerA" | "playerB"
-  logginedPlayer: {
-    playerA?: { point: number }
-    playerB?: { point: number }
-  }
-} | undefined
+function startGame(){ room.start() }
 
-const isGameStarted = ref<boolean>(false)
-socket.on("joinedRoom", (newRoomID: string, newPlayer: "playerA" | "playerB", logginedPlayer) => {
-  console.log("joinedRoom")
-  roomData = {
-    id: newRoomID,
-    playerName: newPlayer,
-    logginedPlayer
-  }
-})
-socket.on("isGameStarted", (newIsGameStarted: boolean) => isGameStarted.value = newIsGameStarted)
-
-let bodies: SendBody[] | undefined
-socket.on("updateData", (newBodies: SendBody[]) => bodies = newBodies)
+const playerName = room.join(uid, onBodiesUpdate, onRoomDataUpdate)
+room.join("a", ()=>{},()=>{})
 
 const keyIsPressed = { a: false, d: false }
 
-socket.on("updateRoomData", (newRoomData) => {
-  if( !roomData ) throw new Error("部屋に入る前にデータの更新を受け取りました")
-  console.log("updateRoomData")
-  roomData.logginedPlayer = newRoomData
-})
+function move( direction: "up" | "left" | "right" ){
+  room.move(uid, direction)
+}
+
+function lookAt( x: number, y: number ){
+  room.lookAt(uid, { x, y })
+}
+
+function shoot(){
+  room.shoot(uid)
+}
 
 function drawGame(p: p5) {
   p.background(0)
@@ -65,7 +42,11 @@ function drawGame(p: p5) {
     if (body.circleRadius) {
       switch (body.label) {
         case "player":
-          p.fill(255, 0, 0)
+          if( (body as unknown as { name: string }).name == "playerA" ){
+            p.fill("#ff4733")
+          }else{
+            p.fill("#3080ff")
+          }
           break
         case "bullet":
           p.fill(0, 255, 0)
@@ -84,10 +65,10 @@ function drawGame(p: p5) {
     }
   })
 
-  if (roomData && isGameStarted.value && keyIsPressed.a) socket.emit("move", "left")
-  if (roomData && isGameStarted.value && keyIsPressed.d) socket.emit("move", "right")
+  if (roomData && roomData.isGameStart && keyIsPressed.a) move("left")
+  if (roomData && roomData.isGameStart && keyIsPressed.d) move("right")
 
-  if (roomData && isGameStarted.value) socket.emit("setAngle", p.mouseX, p.mouseY)
+  if (roomData && roomData.isGameStart) lookAt(p.mouseX, p.mouseY)
 }
 
 function drawPlayer(p: p5, hex: string, name: string, player: { point: number } | undefined, x: number, y: number, isMe: boolean){
@@ -115,11 +96,11 @@ function drawPlayer(p: p5, hex: string, name: string, player: { point: number } 
 onMounted(() => {
   new p5((p: p5) => {
     p.setup = () => {
-      p.createCanvas(800, 600)
+      p.createCanvas(1200, 800)
       p.textFont("Space Mono")
     }
     p.draw = () => {
-      if (isGameStarted.value) {
+      if (roomData?.isGameStart) {
         drawGame(p)
       } else {
         p.background(0)
@@ -129,13 +110,13 @@ onMounted(() => {
         p.textSize(100)
         p.text("MagiCode", p.width / 2, p.height / 2 - 100)
         if( roomData ){
-          drawPlayer(p, "#ff4733", "Player A", roomData.logginedPlayer.playerA, 300, 300, "playerA" == roomData.playerName)
-          drawPlayer(p, "#3080ff", "Player B", roomData.logginedPlayer.playerB, 500, 300, "playerB" == roomData.playerName)
+          drawPlayer(p, "#ff4733", "Player A", roomData.playerA, p.width/2-100, p.height/2 + 50, "playerA" == playerName)
+          drawPlayer(p, "#3080ff", "Player B", roomData.playerB, p.width/2+100, p.height/2 + 50, "playerB" == playerName)
         }
       }
     }
     p.keyPressed = (event: KeyboardEvent) => {
-      if (event.key == "w") socket.emit("move", "up")
+      if (event.key == "w") move("up")
       if (event.key == "a" || event.key == "d") {
         keyIsPressed[event.key] = true
       }
@@ -146,7 +127,16 @@ onMounted(() => {
       }
     }
     p.mouseClicked = () => {
-      if (roomData && isGameStarted.value) socket.emit("shoot")
+      if (roomData && roomData.isGameStart){
+        const t = 20
+        let i = 0
+        const interval = setInterval(() => {
+          if( i < 4 ){
+            shoot()
+          }else{ clearInterval(interval) }
+          i++
+        }, 1000/t)
+      }
     }
   })
 })

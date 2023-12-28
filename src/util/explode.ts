@@ -1,4 +1,4 @@
-import { Body, Vector } from "../infra/matter"
+import { Body, Vector } from "matter-js"
 
 export function explode(bodies: Body[], { x, y }: Vector, size = 1) {
     bodies.forEach(body => {

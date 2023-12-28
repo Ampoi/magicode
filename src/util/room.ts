@@ -1,16 +1,18 @@
-import type { Body, Vector } from "../infra/matter"
+import type { Body, Vector } from "matter-js"
 import { Game } from "./game"
 
-type GameUpdateCallBack = (bodies: Body[]) => void
-type RoomUpdateCallBack = (data: {
+export type RoomData = {
+    isGameStart: boolean
     playerA?: { point: number }
     playerB?: { point: number }
-}) => void
+}
+
+type GameUpdateCallBack = (bodies: Body[]) => void
+type RoomUpdateCallBack = (data: RoomData) => void
 
 type Player = {
     uid: string
     point: number
-    isGameStartCallback: (isGameStarted: boolean) => void
     gameUpdateCallback: GameUpdateCallBack
     roomUpdateCallback: RoomUpdateCallBack
 }
@@ -19,21 +21,20 @@ export class Room {
     playerA?: Player
     playerB?: Player
 
-    noticeRoomUpdate(){
+    private noticeRoomUpdate(){
         const playerA = this.playerA ? { point: this.playerA.point } : undefined
         const playerB = this.playerB ? { point: this.playerB.point } : undefined
 
-        if( this.playerA ) this.playerA.roomUpdateCallback({ playerA, playerB })
-        if( this.playerB ) this.playerB.roomUpdateCallback({ playerA, playerB })
+        if( this.playerA ) this.playerA.roomUpdateCallback({ playerA, playerB, isGameStart: !!this.game })
+        if( this.playerB ) this.playerB.roomUpdateCallback({ playerA, playerB, isGameStart: !!this.game })
     }
 
-    join(uid: string, isGameStartCallback: (isGameStarted: boolean) => void, gameUpdateCallback: GameUpdateCallBack, roomUpdateCallback: RoomUpdateCallBack) {
+    join(uid: string, gameUpdateCallback: GameUpdateCallBack, roomUpdateCallback: RoomUpdateCallBack) {
         if (!this.playerA) {
             console.log(`ユーザー[${uid}]が部屋にプレイヤーAとして入室しました！`)
             this.playerA = {
                 uid,
                 point: 0,
-                isGameStartCallback,
                 gameUpdateCallback,
                 roomUpdateCallback
             }
@@ -46,7 +47,6 @@ export class Room {
             this.playerB = {
                 uid,
                 point: 0,
-                isGameStartCallback,
                 gameUpdateCallback,
                 roomUpdateCallback
             }
@@ -69,7 +69,7 @@ export class Room {
         this.noticeRoomUpdate()
     }
 
-    getPlayerNameFromUID(uid: string){
+    private getPlayerNameFromUID(uid: string){
         if( this.playerA?.uid == uid ){
             return "playerA"
         }else if( this.playerB?.uid == uid ){
@@ -99,8 +99,8 @@ export class Room {
             }
         })
 
-        this.playerA.isGameStartCallback(true)
-        this.playerB.isGameStartCallback(true)
+        this.noticeRoomUpdate()
+        this.noticeRoomUpdate()
 
         this.sendTick = setInterval(() => {
             if( !this.game ) throw new Error("今開催されているゲームがないです")
@@ -115,8 +115,8 @@ export class Room {
         clearInterval(this.sendTick)
         this.game = null
 
-        if( this.playerA ) this.playerA.isGameStartCallback(false)
-        if( this.playerB ) this.playerB.isGameStartCallback(false)
+        this.noticeRoomUpdate()
+        this.noticeRoomUpdate()
     }
 
     move(uid: string, direction: "up" | "left" | "right"){

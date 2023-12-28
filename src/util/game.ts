@@ -1,14 +1,14 @@
-import { Engine, Runner, Events, Body, Bodies, Composite, World, Vector } from "../infra/matter"
+import { Engine, Runner, Events, Body, Bodies, Composite, World, Vector } from "matter-js"
 import { createBullet } from "./createBullet"
 import { explode } from "./explode"
 
 const bounds = {
     x: {
-        min: -200,
-        max: 1000
+        min: 0,
+        max: 1200
     },
     y: {
-        min: -200,
+        min: 0,
         max: 800
     }
 }
@@ -19,13 +19,14 @@ export class Game {
     private readonly engine =  Engine.create()
     private readonly runner =  Runner.create()
 
-    private readonly playerA = Bodies.circle(200, 300, 10, { label: "player" })
-    private readonly playerB = Bodies.circle(500, 100, 10, { label: "player" })
+    private readonly playerA = Bodies.circle(200, 300, 10, { label: "player", name: "playerA" } as any)
+    private readonly playerB = Bodies.circle(600, 100, 10, { label: "player", name: "playerB" } as any)
 
     readonly grounds = [
-        Bodies.rectangle(200, 400, 200, 40, { isStatic: true }),
-        Bodies.rectangle(600, 500, 200, 40, { isStatic: true }),
-        Bodies.rectangle(500, 200, 200, 40, { isStatic: true }),
+        Bodies.rectangle(200, 600, 200, 40, { isStatic: true }),
+        Bodies.rectangle(600, 300, 200, 40, { isStatic: true }),
+        Bodies.rectangle(1000, 700, 200, 40, { isStatic: true }),
+        Bodies.rectangle(400, -300, 800, 400, { isStatic: true })
     ]
 
     private stop = false
@@ -42,13 +43,15 @@ export class Game {
             })
 
             if( !this.stop ){
-                const isPlayerAFallOut =
-                    this.playerA.position.x < bounds.x.min || bounds.x.max < this.playerA.position.x ||
-                    this.playerA.position.y < bounds.y.min || bounds.y.max < this.playerA.position.y
+                if( this.playerA.position.x < bounds.x.min ) Body.setPosition(this.playerA, { x: bounds.x.max, y: this.playerA.position.y })
+                if( bounds.x.max < this.playerA.position.x ) Body.setPosition(this.playerA, { x: bounds.x.min, y: this.playerA.position.y })
                 
-                const isPlayerBFallOut =
-                    this.playerB.position.x < bounds.x.min || bounds.x.max < this.playerB.position.x ||
-                    this.playerB.position.y < bounds.y.min || bounds.y.max < this.playerB.position.y
+                if( this.playerB.position.x < bounds.x.min ) Body.setPosition(this.playerB, { x: bounds.x.max, y: this.playerB.position.y })
+                if( bounds.x.max < this.playerB.position.x ) Body.setPosition(this.playerB, { x: bounds.x.min, y: this.playerB.position.y })
+
+                const isPlayerAFallOut = this.playerA.position.y < bounds.y.min || bounds.y.max < this.playerA.position.y
+                
+                const isPlayerBFallOut = this.playerB.position.y < bounds.y.min || bounds.y.max < this.playerB.position.y
                 
                 if( isPlayerAFallOut && isPlayerBFallOut ){
                     onGameEndCallback()
