@@ -31,6 +31,7 @@ createServer(9648, (socket) => {
 
     socket.on("start", () => {
         if( !joiningRoomID ) throw new Error("部屋に入ってません！")
+        socket.emit("isGameStarted", true)
         console.log("ゲームが開始されました！")
         rooms[joiningRoomID].start()
     })
@@ -40,5 +41,12 @@ createServer(9648, (socket) => {
         if( !rooms[joiningRoomID].started ) throw new Error("ゲームは始まってません！")
 
         rooms[joiningRoomID].move(uid, direction)
+    })
+
+    socket.on("setAngle", (mouseX: number, mouseY: number) => {
+        if( !joiningRoomID ) throw new Error("部屋に入ってません！")
+        if( !rooms[joiningRoomID].started ) throw new Error("ゲームは始まってません！")
+
+        rooms[joiningRoomID].lookAt(uid, { x: mouseX, y: mouseY })
     })
 })

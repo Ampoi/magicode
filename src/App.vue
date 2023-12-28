@@ -1,6 +1,9 @@
 <template>
-  {{ roomID }}
-  {{ player }}
+  <p style="color: white;">
+    {{ roomID }}
+    {{ player }}
+    {{ isGameStarted }}
+  </p>
   <button @click="() => socket.emit('joinRoom', 'a')">joinRoom</button>
   <button @click="() => socket.emit('start')">start</button>
 </template>
@@ -16,10 +19,12 @@ socket.on("connect_error", (error) => {throw error})
 
 const roomID = ref<string>()
 const player = ref<"playerA"|"playerB">()
+const isGameStarted = ref<boolean>(false)
 socket.on("joinedRoom", (newRoomID: string, newPlayer: "playerA" | "playerB") => {
   roomID.value = newRoomID
   player.value = newPlayer
 })
+socket.on("isGameStarted", (newIsGameStarted: boolean) => isGameStarted.value = newIsGameStarted)
 
 let bodies: SendBody[] | undefined
 socket.on("updateData", (newBodies: SendBody[]) => bodies = newBodies)
@@ -56,11 +61,10 @@ onMounted(() => {
         }
       })
 
-      if( keyIsPressed.a ) socket.emit("move", "left")
-      if( keyIsPressed.d ) socket.emit("move", "right")
-
-      //const angle = Math.atan2(player.position.y - p.mouseY, p.mouseX - player.position.x);
-      //Body.setAngle(player, angle);
+      if( roomID.value && isGameStarted.value && keyIsPressed.a ) socket.emit("move", "left")
+      if( roomID.value && isGameStarted.value && keyIsPressed.d ) socket.emit("move", "right")
+      
+      if( roomID.value && isGameStarted.value ) socket.emit("setAngle", p.mouseX, p.mouseY)
     }
     p.keyPressed = (event: KeyboardEvent) => {
       if( event.key == "w" ) socket.emit("move", "up")

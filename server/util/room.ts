@@ -1,4 +1,4 @@
-import { Engine, Runner, Events, Body, Bodies, Composite, World } from "../infra/matter"
+import { Engine, Runner, Events, Body, Bodies, Composite, World, Vector } from "../infra/matter"
 import { createBullet } from "./createBullet"
 import { explode } from "./explode"
 
@@ -137,5 +137,16 @@ export class Room {
             case "up":
                 Body.applyForce(player.body, player.body.position, { x: 0, y: -0.01 })
         }
+    }
+
+    lookAt(uid: string, { x, y }: Vector){
+        if( !this.started ) throw new Error("ゲームが開始されてません！")
+
+        const playerName = this.getPlayerNameFromUID(uid)
+        const player = this[playerName]
+        if( !player ) throw new Error("プレイヤーがいません！！")
+
+        const angle = Math.atan2(player.body.position.y - y, x - player.body.position.x);
+        Body.setAngle(player.body, angle);
     }
 }
