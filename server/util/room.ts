@@ -70,6 +70,7 @@ export class Room {
     }
 
     leave(uid: string){
+        this.stop()
         const playerName = this.getPlayerNameFromUID(uid)
         this[playerName] = undefined
     }
@@ -113,6 +114,8 @@ export class Room {
     stop(){
         clearInterval(this.sendTick)
         this.started = false
+        if( this.playerA ) this.playerA.isGameStartCallback(false)
+        if( this.playerB ) this.playerB.isGameStartCallback(false)
     }
     
     createBullet(uid: string) {

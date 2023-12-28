@@ -13,7 +13,7 @@ createServer(9648, (socket) => {
         if( !uid ) throw new Error("uidが定められてません！")
         if( joiningRoomID ) throw new Error("すでに部屋に入ってます！")
         const player = rooms[roomID].join(uid,
-            () => socket.emit("isGameStarted", true),
+            (newIsGameStarted) => socket.emit("isGameStarted", newIsGameStarted),
             (bodies) => {
                 const sendData: SendBody[] = bodies.map(({ angle, position, circleRadius, bounds, label }) => {
                     return { angle, position, circleRadius, bounds, label }
@@ -22,7 +22,6 @@ createServer(9648, (socket) => {
             }
         )
         joiningRoomID = roomID
-        console.log(`ユーザー[${uid}]が${roomID}に入室しました`)
         socket.emit("joinedRoom", roomID, player)
     })
 
@@ -57,5 +56,11 @@ createServer(9648, (socket) => {
         if( !rooms[joiningRoomID].started ) throw new Error("ゲームは始まってません！")
 
         rooms[joiningRoomID].createBullet(uid)
+    })
+
+    socket.on("disconnect", () => {
+        if( joiningRoomID ){
+            rooms[joiningRoomID].leave(uid)
+        }
     })
 })
