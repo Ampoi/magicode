@@ -1,17 +1,30 @@
 <template>
   <button @click="() => socket.emit('joinRoom', 'a')">joinRoom</button>
   <button @click="() => socket.emit('start')">start</button>
-  <input type="text">
+  <input type="text" v-model="serverUrl">
 </template>
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import io from "socket.io-client"
 import p5 from "p5"
 import { SendBody } from "../model/sendBody"
 
-const serverUrl = "http://localhost:9648"//"https://magicode-server.ampoi.net"
+const serverUrl = computed<string>({
+  get(){
+    const newURL = localStorage.getItem("server-url")
+    if( newURL ){
+      return newURL
+    }else{
+      localStorage.setItem("server-url", "https://magicode-server.ampoi.net")
+      return "https://magicode-server.ampoi.net"
+    }
+  },
+  set(newURL){
+    localStorage.setItem("server-url", newURL)
+  }
+})
 
-const socket = io(serverUrl)
+const socket = io(serverUrl.value)
 socket.on("connect", () => console.log("⚡️サーバーと接続できました！"))
 socket.on("connect_error", (error) => { throw error })
 
