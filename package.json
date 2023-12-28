@@ -6,9 +6,12 @@
   "scripts": {
     "server:dev": "ts-node --project server/tsconfig.json server/main.ts",
     "client:dev": "vite",
+    "client:host": "vite --host",
     "client:build": "vue-tsc && vite build",
     "client:preview": "vite preview",
-    "dev": "npm run server:dev & npm run client:dev"
+    
+    "dev": "npm run server:dev & npm run client:dev",
+    "host": "npm run server:dev & npm run client:host"
   },
   "dependencies": {
     "@types/express": "^4.17.21",

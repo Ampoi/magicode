@@ -78,8 +78,7 @@ onMounted(() => {
       }
     }
     p.mouseClicked = () => {
-      //const random = (Math.random() - 0.5) * 0.05
-      //createBullet(player.position, player.angle + random)
+      if( roomID.value && isGameStarted.value ) socket.emit("shoot")
     }
   })
 

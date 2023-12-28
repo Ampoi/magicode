@@ -6,6 +6,7 @@ type DataUpdateCallBack = (bodies: Body[]) => void
 type Player = {
     uid: string
     body: Body
+    isGameStartCallback: (isGameStarted: boolean) => void
     dataUpdateCallback: DataUpdateCallBack
 }
 
@@ -44,12 +45,13 @@ export class Room {
         })
     }
 
-    join(uid: string, dataUpdateCallback: DataUpdateCallBack) {
+    join(uid: string, isGameStartCallback: (isGameStarted: boolean) => void, dataUpdateCallback: DataUpdateCallBack) {
         if (!this.playerA) {
             console.log(`ユーザー[${uid}]が部屋にプレイヤーAとして入室しました！`)
             this.playerA = {
                 uid,
                 body: Bodies.circle(playerApoint.x, playerApoint.y, 10, { label: "player" }),
+                isGameStartCallback,
                 dataUpdateCallback
             }
             return "playerA"
@@ -58,6 +60,7 @@ export class Room {
             this.playerB = {
                 uid,
                 body: Bodies.circle(playerBpoint.x, playerBpoint.y, 10, { label: "player" }),
+                isGameStartCallback,
                 dataUpdateCallback
             }
             return "playerB"
@@ -93,13 +96,15 @@ export class Room {
         Composite.add(this.engine.world, [this.playerA.body, this.playerB.body, ...this.grounds])
         Runner.run(this.runner, this.engine)
 
+        this.playerA.isGameStartCallback(true)
+        this.playerB.isGameStartCallback(true)
         this.started = true
 
         this.sendTick = setInterval(() => {
             if (!this.playerA) throw new Error("playerAがいません！")
             if (!this.playerB) throw new Error("playerBがいません！")
 
-            const bodies = [ this.playerA.body, this.playerB.body, ...this.grounds ]
+            const bodies = Composite.allBodies(this.engine.world)
             this.playerA.dataUpdateCallback(bodies)
             this.playerB.dataUpdateCallback(bodies)
         }, 1000/this.tps)
@@ -110,12 +115,14 @@ export class Room {
         this.started = false
     }
     
-    createBullet(playerName: "playerA" | "playerB") {
+    createBullet(uid: string) {
+        if( !this.started ) throw new Error("ゲームが開始されてません！")
+
+        const playerName = this.getPlayerNameFromUID(uid)
         const player = this[playerName]
         if( !player ) throw new Error("プレイヤーがいません！！")
 
         const bullet = createBullet(player.body)
-    
         Composite.add(this.engine.world, bullet)
     }
 
@@ -136,6 +143,7 @@ export class Room {
                 break
             case "up":
                 Body.applyForce(player.body, player.body.position, { x: 0, y: -0.01 })
+                break
         }
     }
 
