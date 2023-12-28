@@ -65,7 +65,7 @@ function drawGame(p: p5) {
   if (roomID.value && isGameStarted.value) socket.emit("setAngle", p.mouseX, p.mouseY)
 }
 
-function drawPlayer(p: p5, hex: string, name: string, isLogin: boolean, x: number, y: number){
+function drawPlayer(p: p5, hex: string, name: string, isLogin: boolean, x: number, y: number, isMe: boolean){
   const color = p.color(hex)
   color.setAlpha(isLogin ? 255 : 80)
   p.fill(color)
@@ -73,6 +73,16 @@ function drawPlayer(p: p5, hex: string, name: string, isLogin: boolean, x: numbe
   p.arc(x, y + 70, 80, 80, p.PI, 0);
   p.textSize(30)
   p.text(name, x, y + 100)
+  if( isMe ){
+    p.noFill()
+    p.stroke(255)
+    p.strokeWeight(5)
+    p.rectMode(p.CENTER)
+    p.rect(x, y+60, 180, 220)
+    p.noStroke()
+    p.fill(255)
+    p.text("You", x, y + 150)
+  }
 }
 
 onMounted(() => {
@@ -90,11 +100,11 @@ onMounted(() => {
         p.strokeWeight(0)
         p.textAlign(p.CENTER)
         p.textSize(100)
-        p.text("MagiCode", p.width / 2, p.height / 2)
+        p.text("MagiCode", p.width / 2, p.height / 2 - 100)
 
         console.log(roomData)
-        drawPlayer(p, "#ff4733", "Player A", roomData.playerA, 300, 400)
-        drawPlayer(p, "#3080ff", "Player B", roomData.playerB, 500, 400)
+        drawPlayer(p, "#ff4733", "Player A", roomData.playerA, 300, 300, "playerA" == player.value)
+        drawPlayer(p, "#3080ff", "Player B", roomData.playerB, 500, 300, "playerB" == player.value)
       }
     }
     p.keyPressed = (event: KeyboardEvent) => {
