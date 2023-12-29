@@ -1,11 +1,20 @@
 <template>
   <button @click="cushion.startGame">start</button>
   <button @click="becomeHost = !becomeHost">{{ becomeHost }}</button>
+  <div v-if="!(cushion instanceof Host)">
+    <input type="text" v-model="roomID">
+    <button @click="() => {if(roomID){ cushion.join(roomID) }}">join</button>
+  </div>
+  <button
+    v-if="(cushion instanceof Host)"
+    @click="copyID">copy roomID</button>
 </template>
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import p5 from "p5"
 import { Host, Client } from "./util/cushion"
+
+const roomID = ref<string>()
 
 const becomeHost = computed<boolean>({
   get(){
@@ -18,6 +27,11 @@ const becomeHost = computed<boolean>({
 })
 
 const cushion = becomeHost.value ? new Host() : new Client()
+
+function copyID(){
+  if( !(cushion instanceof Host) ) return
+  navigator.clipboard.writeText(cushion.roomID ?? "")
+}
 
 const keyIsPressed = { a: false, d: false }
 

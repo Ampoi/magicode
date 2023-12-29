@@ -18,25 +18,24 @@ createServer(9648, (io, socket) => {
   socket.on("joinRoom", (newRoomID: string) => {
     if(ableToJoinList[newRoomID]){
       roomID = newRoomID
-      console.log(roomID)
-      io.to(roomID).emit("joinRooma", uid)
+      io.to(roomID).emit("joinRoom", uid)
     }
   })
   socket.on("startGame", () => {
     if( !roomID ) return
-    io.to(roomID).emit("startGame")
+    io.to(roomID).emit("startGame", uid)
   })
   socket.on("move", (direction: "up" | "left" | "right") => {
     if( !roomID ) return
-    io.to(roomID).emit("move", direction)
+    io.to(roomID).emit("move", uid, direction)
   })
   socket.on("lookAt", (x: number, y: number) => {
     if( !roomID ) return
-    io.to(roomID).emit("lookAt", x, y)
+    io.to(roomID).emit("lookAt", uid, x, y)
   })
   socket.on("shoot", () => {
     if( !roomID ) return
-    io.to(roomID).emit("shoot")
+    io.to(roomID).emit("shoot", uid)
   })
 
 }, {

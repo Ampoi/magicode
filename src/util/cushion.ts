@@ -48,11 +48,16 @@ export class Host extends Client {
       this.join(roomID)
     })
 
-    socket.on("joinRooma", (uid) => {
+    socket.on("joinRoom", (uid) => {
       this.room.join(
         uid,
         (bodies) => socket.emit("updateBodies", uid, bodies),
-        (roomData) => socket.emit("upudateRoomData", uid, roomData))
+        (roomData) => socket.emit("updateRoomData", uid, roomData))
     })
+
+    socket.on("startGame", () => this.room.start())
+    socket.on("move", (uid: string, direction: "up" | "left" | "right") => this.room.move(uid, direction))
+    socket.on("lookAt", (uid: string, x: number, y: number) => this.room.lookAt(uid, { x, y }))
+    socket.on("shoot", (uid: string) => this.room.shoot(uid))
   }
 }
