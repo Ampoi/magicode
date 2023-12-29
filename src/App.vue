@@ -1,7 +1,9 @@
 <template>
   <main class="w-screen h-screen bg-gray-800 text-white grid place-content-center font-spaceMono">
     <div ref="main" class="relative">
-      <div class="w-full absolute left-1/2 -translate-x-1/2 top-[8%] text-4xl flex flex-row gap-8 justify-center">
+      <div
+        v-if="showUI"
+        class="w-full absolute left-1/2 -translate-x-1/2 top-[8%] text-4xl flex flex-row gap-8 justify-center">
         <button
           v-if="(cushion instanceof Host)"
           @click="copyID" class="px-6 py-2 rounded-full border-4 border-white">Copy RoomID
@@ -25,7 +27,9 @@
           Become {{ becomeHost ? "Client" : "Host" }}
         </button>
       </div>
-      <div class="w-full absolute left-1/2 -translate-x-1/2 bottom-[8%] text-4xl flex flex-row gap-8 justify-center">
+      <div
+        v-if="showUI"
+        class="w-full absolute left-1/2 -translate-x-1/2 bottom-[8%] text-4xl flex flex-row gap-8 justify-center">
         <button @click="cushion.startGame" class="px-6 py-2 rounded-full border-4 border-white">
           Start
         </button>
@@ -39,6 +43,7 @@ import p5 from "p5"
 import { Host, Client } from "./util/cushion"
 
 const roomID = ref<string>()
+const showUI = ref(true)
 
 const becomeHost = computed<boolean>({
   get(){
@@ -126,8 +131,10 @@ onMounted(() => {
     }
     p.draw = () => {
       if (cushion.roomData?.isGameStart) {
+        showUI.value = false
         drawGame(p)
       } else {
+        showUI.value = true
         p.background(0)
         p.fill(255)
         p.strokeWeight(0)
