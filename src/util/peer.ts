@@ -3,7 +3,15 @@ import { socket } from "../infra/socket.io";
 const peer = new RTCPeerConnection({
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 });
-const dc = peer.createDataChannel("aa", { negotiated: true, id: 0 })
+
+export const join             = peer.createDataChannel("join",              { negotiated: true, id: 0 })
+export const updateRoomData   = peer.createDataChannel("updateRoomData",    { negotiated: true, id: 1 })
+export const updateBodies     = peer.createDataChannel("updateBodies",      { negotiated: true, id: 2 })
+export const updatePlayerName = peer.createDataChannel("updatePlayerName",  { negotiated: true, id: 3 })
+export const startGame        = peer.createDataChannel("startGame",         { negotiated: true, id: 4 })
+export const move             = peer.createDataChannel("move",              { negotiated: true, id: 5 })
+export const lookAt           = peer.createDataChannel("lookAt",            { negotiated: true, id: 6 })
+export const shoot            = peer.createDataChannel("shoot",             { negotiated: true, id: 7 })
 
 const iceCandidates: RTCIceCandidate[] = [];
 peer.addEventListener("icecandidate", (event) => {
@@ -57,15 +65,6 @@ socket.on("iceCandidates", async (remoteIceCandidates: RTCIceCandidateInit[]) =>
     await peer.addIceCandidate(iceCandidate)
   }
 })
-
-dc.onopen = () => {
-  console.log("test sended")
-  dc.send("hey!!!")
-}
-
-dc.onmessage = (msg) => {
-  console.log(msg)
-}
 
 function registerPeerConnectionListeners() {
   peer.addEventListener('icegatheringstatechange', () => {

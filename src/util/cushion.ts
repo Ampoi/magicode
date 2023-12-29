@@ -1,11 +1,11 @@
 import { Room, RoomData } from "./room";
 import { socket } from "../infra/socket.io";
 import { SendBody } from "../model/sendBody";
-import { sendOffer } from "./peer";
+import { join, lookAt, move, sendOffer, shoot, startGame, updateBodies, updatePlayerName, updateRoomData } from "./peer";
 
 type PlayerName = "playerA" | "playerB";
 
-export class Client {
+export abstract class Main {
   public bodies: SendBody[] | null = null;
   public updateBodies(newBodies: SendBody[]) {
     this.bodies = newBodies;
@@ -20,32 +20,59 @@ export class Client {
   constructor() {
     this.updateBodies = this.updateBodies.bind(this);
     this.updateRoomData = this.updateRoomData.bind(this);
+  }
 
-    ////socket.on("updateRoomData", this.updateRoomData)
-    //socket.on("updateBodies", this.updateBodies)
-    //socket.on("updatePlayerName", (newName: PlayerName) => this.playerName = newName)
+  public abstract startGame(): void
+  public abstract move(direction: "up" | "left" | "right"): void
+  public abstract lookAt(x: number, y: number): void
+  public abstract shoot(): void
+  public abstract join(roomID: string): void
+}
+
+export class Client extends Main {
+  constructor() {
+    super()
+
+    updateBodies.addEventListener("message", (data) => {
+      const bodies: SendBody[] = JSON.parse(data.data)
+      this.updateBodies(bodies)
+    })
+    updateRoomData.addEventListener("message", (data) => {
+      const roomData: RoomData = JSON.parse(data.data)
+      this.updateRoomData(roomData)
+    })
+    updatePlayerName.addEventListener("message", (data) => {
+      const newPlayerName: PlayerName = data.data
+      this.playerName = newPlayerName
+    })
   }
 
   public startGame(): void {
-    //socket.emit("startGame")
+    startGame.send("")
   }
   public move(direction: "up" | "left" | "right"): void {
-    //socket.emit("move", direction)
+    move.send(direction)
   }
   public lookAt(x: number, y: number): void {
-    //socket.emit("lookAt", x, y)
+    const data = JSON.stringify({ x, y })
+    lookAt.send(data)
   }
   public shoot(): void {
-    //socket.emit("shoot")
+    shoot.send("")
   }
   public async join(roomID: string) {
     await sendOffer(roomID)
+    join.addEventListener("open", () => {
+      join.send("")
+    })
   }
 }
 
-export class Host extends Client {
+export class Host extends Main {
   private readonly room = new Room();
   public roomID: string | null = null;
+
+  private readonly roomPlayerID = "host"
 
   constructor() {
     super();
@@ -55,25 +82,48 @@ export class Host extends Client {
     socket.on("roomID", (roomID) => {
       console.log("← | roomID[" + roomID + "]が割り当てられました！")
       this.roomID = roomID;
-      this.room.join(roomID, this.updateBodies, this.updateRoomData)
+      this.join()
     });
 
-    //socket.on("joinRoom", (uid) => {
-    //  const playerName = this.room.join(
-    //    uid,
-    //    (bodies) => socket.emit("updateBodies", uid, bodies),
-    //    (roomData) => socket.emit("updateRoomData", uid, roomData)
-    //  );
-    //  socket.emit("newPlayerName", uid, playerName);
-    //});
+    const guestID = "guest"
 
-    //socket.on("startGame", () => this.room.start());
-    //socket.on("move", (uid: string, direction: "up" | "left" | "right") =>
-    //  this.room.move(uid, direction)
-    //);
-    //socket.on("lookAt", (uid: string, x: number, y: number) =>
-    //  this.room.lookAt(uid, { x, y })
-    //);
-    //socket.on("shoot", (uid: string) => this.room.shoot(uid));
+    join.addEventListener("message", () => {
+      const playerName = this.room.join(
+        guestID,
+        (bodies) => {
+          const data = JSON.stringify(bodies)
+          updateBodies.send(data)
+        },
+        (roomData) => {
+          const data = JSON.stringify(roomData)
+          updateRoomData.send(data)
+        }
+      )
+      updatePlayerName.send(playerName)
+    })
+
+    startGame.addEventListener("message", () => {
+      this.room.start()
+    })
+
+    move.addEventListener("message", (data) => {
+      const direction: "left" | "right" | "up" = data.data
+      this.room.move(guestID, direction)
+    })
+
+    lookAt.addEventListener("message", (data) => {
+      const point = JSON.parse(data.data)
+      this.room.lookAt(guestID, point)
+    })
+
+    shoot.addEventListener("message", () => {
+      this.room.shoot(guestID)
+    })
   }
+
+  public startGame(): void { this.room.start() }
+  public move(direction: "up" | "left" | "right"): void { this.room.move(this.roomPlayerID, direction) }
+  public lookAt(x: number, y: number): void { this.room.lookAt(this.roomPlayerID, { x, y }) }
+  public shoot(): void { this.room.shoot(this.roomPlayerID) }
+  public join(): void { this.playerName = this.room.join(this.roomPlayerID, this.updateBodies, this.updateRoomData) }
 }
