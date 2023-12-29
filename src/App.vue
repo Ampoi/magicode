@@ -1,44 +1,20 @@
 <template>
-  <button @click="startGame">start</button>
+  <button @click="cushion.startGame">start</button>
+  <button @click="cushion.join">join</button>
 </template>
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import p5 from "p5"
-import { Room } from "./util/room"
-import { Body } from 'matter-js';
-import { RoomData } from "./util/room"
-import { createUID } from "./util/createUID"
-
-const room = new Room()
-const uid = createUID()
-
-let bodies: Body[] | null
-function onBodiesUpdate( newBodies: Body[] ){ bodies = newBodies }
-let roomData: RoomData | null
-function onRoomDataUpdate( newRoomData: RoomData ){ roomData = newRoomData }
-
-function startGame(){ room.start() }
-
-const playerName = room.join(uid, onBodiesUpdate, onRoomDataUpdate)
-room.join("a", ()=>{},()=>{})
+import { Host } from "./util/host"
 
 const keyIsPressed = { a: false, d: false }
 
-function move( direction: "up" | "left" | "right" ){
-  room.move(uid, direction)
-}
-
-function lookAt( x: number, y: number ){
-  room.lookAt(uid, { x, y })
-}
-
-function shoot(){
-  room.shoot(uid)
-}
+const cushion = new Host()
+//cushion.join()
 
 function drawGame(p: p5) {
   p.background(0)
-  bodies?.forEach(body => {
+  cushion.bodies?.forEach(body => {
     if (body.circleRadius) {
       switch (body.label) {
         case "player":
@@ -65,10 +41,10 @@ function drawGame(p: p5) {
     }
   })
 
-  if (roomData && roomData.isGameStart && keyIsPressed.a) move("left")
-  if (roomData && roomData.isGameStart && keyIsPressed.d) move("right")
+  if ( cushion.roomData && cushion.roomData.isGameStart && keyIsPressed.a) cushion.move("left")
+  if ( cushion.roomData && cushion.roomData.isGameStart && keyIsPressed.d) cushion.move("right")
 
-  if (roomData && roomData.isGameStart) lookAt(p.mouseX, p.mouseY)
+  if ( cushion.roomData && cushion.roomData.isGameStart) cushion.lookAt(p.mouseX, p.mouseY)
 }
 
 function drawPlayer(p: p5, hex: string, name: string, player: { point: number } | undefined, x: number, y: number, isMe: boolean){
@@ -100,7 +76,7 @@ onMounted(() => {
       p.textFont("Space Mono")
     }
     p.draw = () => {
-      if (roomData?.isGameStart) {
+      if (cushion.roomData?.isGameStart) {
         drawGame(p)
       } else {
         p.background(0)
@@ -109,14 +85,14 @@ onMounted(() => {
         p.textAlign(p.CENTER)
         p.textSize(100)
         p.text("MagiCode", p.width / 2, p.height / 2 - 100)
-        if( roomData ){
-          drawPlayer(p, "#ff4733", "Player A", roomData.playerA, p.width/2-100, p.height/2 + 50, "playerA" == playerName)
-          drawPlayer(p, "#3080ff", "Player B", roomData.playerB, p.width/2+100, p.height/2 + 50, "playerB" == playerName)
+        if( cushion.roomData ){
+          drawPlayer(p, "#ff4733", "Player A", cushion.roomData.playerA, p.width/2-100, p.height/2 + 50, "playerA" == cushion.playerName)
+          drawPlayer(p, "#3080ff", "Player B", cushion.roomData.playerB, p.width/2+100, p.height/2 + 50, "playerB" == cushion.playerName)
         }
       }
     }
     p.keyPressed = (event: KeyboardEvent) => {
-      if (event.key == "w") move("up")
+      if (event.key == "w") cushion.move("up")
       if (event.key == "a" || event.key == "d") {
         keyIsPressed[event.key] = true
       }
@@ -127,16 +103,7 @@ onMounted(() => {
       }
     }
     p.mouseClicked = () => {
-      if (roomData && roomData.isGameStart){
-        const t = 20
-        let i = 0
-        const interval = setInterval(() => {
-          if( i < 4 ){
-            shoot()
-          }else{ clearInterval(interval) }
-          i++
-        }, 1000/t)
-      }
+      if (cushion.roomData && cushion.roomData.isGameStart) cushion.shoot()
     }
   })
 })
