@@ -3,7 +3,7 @@ import { socket } from "../infra/socket.io";
 const peer = new RTCPeerConnection({
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 });
-const dc = peer.createDataChannel("aa")
+const dc = peer.createDataChannel("aa", { negotiated: true, id: 0 })
 
 const iceCandidates: RTCIceCandidate[] = [];
 peer.addEventListener("icecandidate", (event) => {
@@ -33,10 +33,22 @@ async function sendAnswer(offer: RTCSessionDescriptionInit, uid: string){
   console.log("→ | answerを送信しました")
 }
 
+const iceGathering = new Promise((resolve) => {
+  const interval = setInterval(() => {
+    if (peer.iceGatheringState == "complete") {
+        clearInterval(interval);
+        resolve(undefined);
+    }
+  }, 100);
+})
+
 socket.on("answer", async (answer: RTCSessionDescriptionInit) => {
   console.log("← | answerを受信しました")
   await peer.setRemoteDescription(answer)
-  socket.emit("iceCandidates", iceCandidates)
+  iceGathering.then(() => {
+    console.log("→ | ICE Candidatesを送信しました")
+    socket.emit("iceCandidates", iceCandidates)
+  })
 })
 
 socket.on("iceCandidates", async (remoteIceCandidates: RTCIceCandidateInit[]) => {
