@@ -1,5 +1,6 @@
-import type { Body, Vector } from "matter-js"
+import type { Vector } from "matter-js"
 import { Game } from "./room/game"
+import { SendBody } from "../model/sendBody"
 
 export type RoomData = {
     isGameStart: boolean
@@ -7,7 +8,7 @@ export type RoomData = {
     playerB?: { point: number }
 }
 
-type GameUpdateCallBack = (bodies: Body[]) => void
+type GameUpdateCallBack = (bodies: SendBody[]) => void
 type RoomUpdateCallBack = (data: RoomData) => void
 
 type Player = {
@@ -93,7 +94,6 @@ export class Room {
             if( winnerName ){
                 const winner = this[winnerName]
                 if( winner ) winner.point += 1
-                console.log(this.game)
 
                 this.noticeRoomUpdate()
             }
@@ -104,7 +104,16 @@ export class Room {
 
         this.sendTick = setInterval(() => {
             if( !this.game ) throw new Error("今開催されているゲームがないです")
-            const bodies = this.game.bodies
+            const bodies = this.game.bodies.map((body): SendBody => {
+                return {
+                    angle: body.angle,
+                    position: body.position,
+                    bounds: body.bounds,
+                    label: body.label,
+                    circleRadius: body.circleRadius,
+                    name: (body as { name?: string }).name
+                }
+            })
 
             this.playerA?.gameUpdateCallback(bodies)
             this.playerB?.gameUpdateCallback(bodies)

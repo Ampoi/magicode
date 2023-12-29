@@ -1,14 +1,14 @@
-import { Body } from 'matter-js'
 import { Room, RoomData } from "./room"
 import { socket } from "../infra/socket.io"
+import { SendBody } from '../model/sendBody';
 
 export class Client {
-  public bodies: Body[] | null = null
-  public updateBodies( newBodies: Body[] ){ console.log("hey!");this.bodies = newBodies }
+  public bodies: SendBody[] | null = null
+  public updateBodies( newBodies: SendBody[] ){ this.bodies = newBodies }
   
   public playerName: "playerA" | "playerB" | undefined
   public roomData: RoomData | null = null
-  public updateRoomData( newRoomData: RoomData ){ console.log("hey!");this.roomData = newRoomData }
+  public updateRoomData( newRoomData: RoomData ){ this.roomData = newRoomData }
 
   constructor(){
     this.updateBodies = this.updateBodies.bind(this);
