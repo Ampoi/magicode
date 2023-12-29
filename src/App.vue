@@ -1,6 +1,10 @@
 <template>
-  <main class="w-screen h-screen bg-gray-800 text-white grid place-content-center font-spaceMono">
-    <div ref="main" class="relative">
+  <main class="w-screen h-screen bg-stone-800 text-white grid place-content-center font-spaceMono">
+    <div class="flex flex-row gap-4 justify-center bg-black/40">
+      <input type="text" v-model="serverAddress" class="bg-transparent">
+      <button @click="changeServer">サーバーを変更する</button>
+    </div>
+    <div ref="main" class="relative shadow-2xl shadow-black">
       <div
         v-if="showUI"
         class="w-full absolute left-1/2 -translate-x-1/2 top-[8%] text-4xl flex flex-row gap-8 justify-center">
@@ -41,6 +45,7 @@
 import { computed, onMounted, ref } from 'vue';
 import p5 from "p5"
 import { Host, Client } from "./util/cushion"
+import { serverAddress, changeServer } from "./util/serverAddress"
 
 const roomID = ref<string>()
 const showUI = ref(true)
