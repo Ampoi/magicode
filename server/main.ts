@@ -12,6 +12,7 @@ createServer(9648, (io, socket) => {
   })
   socket.on("updateBodies", (uid, bodies) => io.to(uid).emit("updateBodies", bodies))
   socket.on("updateRoomData", (uid, bodies) => io.to(uid).emit("updateRoomData", bodies))
+  socket.on("newPlayerName", (uid, playerName) => io.to(uid).emit("updatePlayerName", playerName))
 
   //くらいあんと
   let roomID: string | null

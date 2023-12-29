@@ -2,11 +2,13 @@ import { Room, RoomData } from "./room"
 import { socket } from "../infra/socket.io"
 import { SendBody } from '../model/sendBody';
 
+type PlayerName = "playerA" | "playerB"
+
 export class Client {
   public bodies: SendBody[] | null = null
   public updateBodies( newBodies: SendBody[] ){ this.bodies = newBodies }
   
-  public playerName: "playerA" | "playerB" | undefined
+  public playerName: PlayerName | undefined
   public roomData: RoomData | null = null
   public updateRoomData( newRoomData: RoomData ){ this.roomData = newRoomData }
 
@@ -16,6 +18,7 @@ export class Client {
 
     socket.on("updateRoomData", this.updateRoomData)
     socket.on("updateBodies", this.updateBodies)
+    socket.on("updatePlayerName", (newName: PlayerName) => this.playerName = newName)
   }
 
   public startGame(): void {
@@ -49,10 +52,12 @@ export class Host extends Client {
     })
 
     socket.on("joinRoom", (uid) => {
-      this.room.join(
+      const playerName = this.room.join(
         uid,
         (bodies) => socket.emit("updateBodies", uid, bodies),
-        (roomData) => socket.emit("updateRoomData", uid, roomData))
+        (roomData) => socket.emit("updateRoomData", uid, roomData)
+      )
+      socket.emit("newPlayerName", uid, playerName)
     })
 
     socket.on("startGame", () => this.room.start())
