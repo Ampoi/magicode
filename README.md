@@ -1,25 +1,23 @@
 めも
 
 ```mermaid
-flowchart LR
+flowchart TD
    subgraph Client
-      subgraph Core
-         Room
-      end
-      subgraph Main
+      subgraph Cushion
          Reciever
          Host
       end
       UI
+      Room
    end
 
-   UI --操作--> Main
-   Main --描画--> UI
+   UI --操作--> Cushion
+   Cushion --描画--> UI
 
    Room --ゲームデータの送信--> Host
    Host --操作データの送信--> Room
    Room --ゲームデータの送信--> Server
-   Server --ゲームデータの送信--> Room
+   Server --操作データの送信--> Room
    Server --ゲームデータの送信--> Reciever
    Reciever --操作データの送信--> Server
 ```

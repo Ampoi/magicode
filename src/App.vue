@@ -1,13 +1,23 @@
 <template>
   <button @click="cushion.startGame">start</button>
-  <button @click="cushion.join">join</button>
+  <button @click="becomeHost = !becomeHost">{{ becomeHost }}</button>
 </template>
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import p5 from "p5"
-import { Host } from "./util/host"
+import { Host, Client } from "./util/cushion"
 
-const cushion = new Host()
+const becomeHost = computed<boolean>({
+  get(){
+    return localStorage.getItem("becomeHost") == "true"
+  },
+  set(newValue){
+    localStorage.setItem("becomeHost", newValue.toString())
+    window.location.reload()
+  }
+})
+
+const cushion = becomeHost.value ? new Host() : new Client()
 
 const keyIsPressed = { a: false, d: false }
 
@@ -84,6 +94,10 @@ onMounted(() => {
         p.textAlign(p.CENTER)
         p.textSize(100)
         p.text("MagiCode", p.width / 2, p.height / 2 - 100)
+        if( cushion instanceof Host ){
+          p.textSize(30)
+          p.text(`You are Host! RoomID: ${cushion.roomID}`, p.width / 2, p.height / 2 - 40)
+        }
         if( cushion.roomData ){
           drawPlayer(p, "#ff4733", "Player A", cushion.roomData.playerA, p.width/2-100, p.height/2 + 50, "playerA" == cushion.playerName)
           drawPlayer(p, "#3080ff", "Player B", cushion.roomData.playerB, p.width/2+100, p.height/2 + 50, "playerB" == cushion.playerName)

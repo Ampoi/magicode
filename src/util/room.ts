@@ -1,5 +1,5 @@
 import type { Body, Vector } from "matter-js"
-import { Game } from "./game"
+import { Game } from "./room/game"
 
 export type RoomData = {
     isGameStart: boolean
