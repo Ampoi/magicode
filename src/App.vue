@@ -1,13 +1,37 @@
 <template>
-  <button @click="cushion.startGame">start</button>
-  <button @click="becomeHost = !becomeHost">{{ becomeHost }}</button>
-  <div v-if="!(cushion instanceof Host)">
-    <input type="text" v-model="roomID">
-    <button @click="() => {if(roomID){ cushion.join(roomID) }}">join</button>
-  </div>
-  <button
-    v-if="(cushion instanceof Host)"
-    @click="copyID">copy roomID</button>
+  <main class="w-screen h-screen bg-gray-800 text-white grid place-content-center font-spaceMono">
+    <div ref="main" class="relative">
+      <div class="w-full absolute left-1/2 -translate-x-1/2 top-[8%] text-4xl flex flex-row gap-8 justify-center">
+        <button
+          v-if="(cushion instanceof Host)"
+          @click="copyID" class="px-6 py-2 rounded-full border-4 border-white">Copy RoomID
+        </button>
+        <div
+          v-else class="flex flex-row">
+          <input
+            type="text"
+            v-model="roomID"
+            class="px-6 py-2 rounded-l-full border-4 border-white bg-black placeholder:text-white/30"
+            placeholder="Input RoomID...">
+          <button
+            @click="() => {if(roomID){ cushion.join(roomID) }}"
+            class="px-6 pl-2 rounded-r-full border-4 border-white">
+            join
+          </button>
+        </div>
+        <button
+          @click="becomeHost = !becomeHost"
+          class="px-6 py-2 rounded-full border-4 border-white">
+          Become {{ becomeHost ? "Client" : "Host" }}
+        </button>
+      </div>
+      <div class="w-full absolute left-1/2 -translate-x-1/2 bottom-[8%] text-4xl flex flex-row gap-8 justify-center">
+        <button @click="cushion.startGame" class="px-6 py-2 rounded-full border-4 border-white">
+          Start
+        </button>
+      </div>
+    </div>
+  </main>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
@@ -92,6 +116,8 @@ function drawPlayer(p: p5, hex: string, name: string, player: { point: number } 
   }
 }
 
+const main = ref<HTMLElement>()
+
 onMounted(() => {
   new p5((p: p5) => {
     p.setup = () => {
@@ -108,13 +134,9 @@ onMounted(() => {
         p.textAlign(p.CENTER)
         p.textSize(100)
         p.text("MagiCode", p.width / 2, p.height / 2 - 100)
-        if( cushion instanceof Host ){
-          p.textSize(30)
-          p.text(`You are Host! RoomID: ${cushion.roomID}`, p.width / 2, p.height / 2 - 40)
-        }
         if( cushion.roomData ){
-          drawPlayer(p, "#ff4733", "Player A", cushion.roomData.playerA, p.width/2-100, p.height/2 + 50, "playerA" == cushion.playerName)
-          drawPlayer(p, "#3080ff", "Player B", cushion.roomData.playerB, p.width/2+100, p.height/2 + 50, "playerB" == cushion.playerName)
+          drawPlayer(p, "#ff4733", "Player A", cushion.roomData.playerA, p.width/2-100, p.height/2 + 20, "playerA" == cushion.playerName)
+          drawPlayer(p, "#3080ff", "Player B", cushion.roomData.playerB, p.width/2+100, p.height/2 + 20, "playerB" == cushion.playerName)
         }
       }
     }
@@ -132,6 +154,6 @@ onMounted(() => {
     p.mouseClicked = () => {
       if (cushion.roomData && cushion.roomData.isGameStart) cushion.shoot()
     }
-  })
+  }, main.value)
 })
 </script>
