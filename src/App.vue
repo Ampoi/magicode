@@ -7,10 +7,9 @@ import { onMounted } from 'vue';
 import p5 from "p5"
 import { Host } from "./util/host"
 
-const keyIsPressed = { a: false, d: false }
-
 const cushion = new Host()
-//cushion.join()
+
+const keyIsPressed = { a: false, d: false }
 
 function drawGame(p: p5) {
   p.background(0)
