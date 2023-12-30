@@ -8,7 +8,7 @@ export function explode(bodies: Body[], { x, y }: Vector, size = 1) {
 
         if (distance < size * 300) {
             const forceDirection = Vector.normalise(vector)
-            const force = Vector.mult(forceDirection, size / 400 / (distance / 10))
+            const force = Vector.mult(forceDirection, size / 800 / (distance / 10))
 
             Body.applyForce(body, { x, y }, force)
         }

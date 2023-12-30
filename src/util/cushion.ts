@@ -134,11 +134,13 @@ export class Host extends Main {
     })
   }
 
-  public startGame(): void { this.room.start() }
-  public move(direction: Direction): void { this.room.move(this.roomPlayerID, direction) }
+  public startGame(): void                  { this.room.start() }
+  public move(direction: Direction): void   { this.room.move(this.roomPlayerID, direction) }
   public lookAt(x: number, y: number): void { this.room.lookAt(this.roomPlayerID, { x, y }) }
-  public shoot(): void { this.room.shoot(this.roomPlayerID) }
-  public join(): void { this.playerName = this.room.join(
+  public shoot(): void                      { this.room.shoot(this.roomPlayerID) }
+  
+  public join(): void {
+    this.playerName = this.room.join(
       this.roomPlayerID,
       this.updateBodies,
       this.updateRoomData,

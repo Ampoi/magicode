@@ -167,6 +167,20 @@ function drawPlayer(p: p5, hex: string, name: string, player: { point: number } 
   }
 }
 
+function drawMenu(p: p5){
+  p.background(0)
+
+  p.fill(255)
+  p.strokeWeight(0)
+  p.textAlign(p.CENTER)
+  p.textSize(100)
+  p.text("MagiCode", p.width / 2, p.height / 2 - 100)
+  if( cushion.roomData ){
+    drawPlayer(p, "#ff4733", "Player A", cushion.roomData.playerA, p.width/2-100, p.height/2 + 20, "playerA" == cushion.playerName)
+    drawPlayer(p, "#3080ff", "Player B", cushion.roomData.playerB, p.width/2+100, p.height/2 + 20, "playerB" == cushion.playerName)
+  }
+}
+
 const main = ref<HTMLElement>()
 
 onMounted(() => {
@@ -181,29 +195,15 @@ onMounted(() => {
         drawGame(p)
       } else {
         showUI.value = true
-        p.background(0)
-
-        p.fill(255)
-        p.strokeWeight(0)
-        p.textAlign(p.CENTER)
-        p.textSize(100)
-        p.text("MagiCode", p.width / 2, p.height / 2 - 100)
-        if( cushion.roomData ){
-          drawPlayer(p, "#ff4733", "Player A", cushion.roomData.playerA, p.width/2-100, p.height/2 + 20, "playerA" == cushion.playerName)
-          drawPlayer(p, "#3080ff", "Player B", cushion.roomData.playerB, p.width/2+100, p.height/2 + 20, "playerB" == cushion.playerName)
-        }
+        drawMenu(p)
       }
     }
     p.keyPressed = (event: KeyboardEvent) => {
       if (event.key == "w") cushion.move("up")
-      if (event.key == "a" || event.key == "d") {
-        keyIsPressed[event.key] = true
-      }
+      if (event.key == "a" || event.key == "d") keyIsPressed[event.key] = true
     }
     p.keyReleased = (event: KeyboardEvent) => {
-      if (event.key == "a" || event.key == "d") {
-        keyIsPressed[event.key] = false
-      }
+      if (event.key == "a" || event.key == "d") keyIsPressed[event.key] = false
     }
     p.mouseClicked = () => {
       if (cushion.roomData && cushion.roomData.isGameStart) cushion.shoot()

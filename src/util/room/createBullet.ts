@@ -15,7 +15,7 @@ export function createBullet( player: Body ){
         { label: "bullet" }
     )
 
-    const bulletForceSize = 0.005
+    const bulletForceSize = 0.0025
     Body.applyForce(bullet, bullet.position, {
         x: Math.cos(angle) * bulletForceSize,
         y: -Math.sin(angle) * bulletForceSize
