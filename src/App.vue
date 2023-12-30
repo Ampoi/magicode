@@ -1,42 +1,55 @@
 <template>
   <main class="w-screen h-screen bg-stone-800 text-white grid place-content-center font-spaceMono">
-    <div class="flex flex-row gap-4 justify-center bg-black/40">
-      <input type="text" v-model="serverAddress" class="bg-transparent">
-      <button @click="changeServer">サーバーを変更する</button>
-    </div>
-    <div ref="main" class="relative shadow-2xl shadow-black">
-      <div
-        v-if="showUI"
-        class="w-full absolute left-1/2 -translate-x-1/2 top-[8%] text-4xl flex flex-row gap-8 justify-center">
-        <button
-          v-if="(cushion instanceof Host)"
-          @click="copyID" class="px-6 py-2 rounded-full border-4 border-white">Copy RoomID
-        </button>
+    <div class="flex flex-col shadow-2xl shadow-black">
+      <div class="flex flex-row gap-4 justify-center bg-black/40">
+        <input type="text" v-model="serverAddress" class="bg-transparent">
+        <button @click="changeServer">サーバーを変更する</button>
+      </div>
+      <div ref="main" class="relative">
         <div
-          v-else class="flex flex-row">
-          <input
-            type="text"
-            v-model="roomID"
-            class="px-6 py-2 rounded-l-full border-4 border-white bg-black placeholder:text-white/30"
-            placeholder="Input RoomID...">
+          v-if="showUI"
+          class="w-full absolute left-1/2 -translate-x-1/2 top-[8%] text-4xl flex flex-row gap-8 justify-center">
           <button
-            @click="() => {if(roomID){ cushion.join(roomID) }}"
-            class="px-6 pl-2 rounded-r-full border-4 border-white">
-            join
+            v-if="(cushion instanceof Host)"
+            @click="copyID" class="px-6 py-2 rounded-full border-4 border-white">Copy RoomID
+          </button>
+          <div
+            v-else class="flex flex-row">
+            <input
+              type="text"
+              v-model="roomID"
+              class="px-6 py-2 rounded-l-full border-4 border-white bg-black placeholder:text-white/30"
+              placeholder="Input RoomID...">
+            <button
+              @click="() => {if(roomID){ cushion.join(roomID) }}"
+              class="px-6 pl-2 rounded-r-full border-4 border-white">
+              join
+            </button>
+          </div>
+          <button
+            @click="becomeHost = !becomeHost"
+            class="px-6 py-2 rounded-full border-4 border-white">
+            Become {{ becomeHost ? "Client" : "Host" }}
           </button>
         </div>
-        <button
-          @click="becomeHost = !becomeHost"
-          class="px-6 py-2 rounded-full border-4 border-white">
-          Become {{ becomeHost ? "Client" : "Host" }}
-        </button>
+        <div
+          v-if="showUI"
+          class="w-full absolute left-1/2 -translate-x-1/2 bottom-[8%] text-4xl flex flex-row gap-8 justify-center">
+          <button @click="cushion.startGame" class="px-6 py-2 rounded-full border-4 border-white">
+            Start
+          </button>
+        </div>
       </div>
-      <div
-        v-if="showUI"
-        class="w-full absolute left-1/2 -translate-x-1/2 bottom-[8%] text-4xl flex flex-row gap-8 justify-center">
-        <button @click="cushion.startGame" class="px-6 py-2 rounded-full border-4 border-white">
-          Start
-        </button>
+      <div class="w-full flex flex-row text-white">
+        <div class="grow text-center">
+          {{ rtcState.iceGathering }}
+        </div>
+        <div class="grow text-center">
+          {{ rtcState.peerConnection }}
+        </div>
+        <div class="grow text-center">
+          {{ rtcState.signaling }}
+        </div>
       </div>
     </div>
   </main>
@@ -46,6 +59,7 @@ import { computed, onMounted, ref } from 'vue';
 import p5 from "p5"
 import { Host, Client } from "./util/cushion"
 import { serverAddress, changeServer } from "./util/serverAddress"
+import { rtcState } from './util/peer';
 
 const roomID = ref<string>()
 const showUI = ref(true)

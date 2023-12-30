@@ -1,3 +1,4 @@
+import { reactive } from "vue";
 import { socket } from "../infra/socket.io";
 
 const peer = new RTCPeerConnection({
@@ -66,23 +67,37 @@ socket.on("iceCandidates", async (remoteIceCandidates: RTCIceCandidateInit[]) =>
   }
 })
 
+export const rtcState = reactive<{
+  iceGathering: RTCIceGatheringState
+  peerConnection: RTCPeerConnectionState
+  signaling: RTCSignalingState
+  iceConnection: RTCIceConnectionState
+}>({
+  iceGathering: peer.iceGatheringState,
+  peerConnection: peer.connectionState,
+  signaling: peer.signalingState,
+  iceConnection: peer.iceConnectionState
+})
+
 function registerPeerConnectionListeners() {
   peer.addEventListener('icegatheringstatechange', () => {
-    console.log(
-        `ICE gathering state changed: ${peer.iceGatheringState}`);
+    console.log(`ICE gathering state change: ${peer.iceGatheringState}`);
+    rtcState.iceGathering = peer.iceGatheringState
   });
 
   peer.addEventListener('connectionstatechange', () => {
     console.log(`Connection state change: ${peer.connectionState}`);
+    rtcState.peerConnection = peer.connectionState
   });
 
   peer.addEventListener('signalingstatechange', () => {
     console.log(`Signaling state change: ${peer.signalingState}`);
+    rtcState.signaling = peer.signalingState
   });
 
   peer.addEventListener('iceconnectionstatechange ', () => {
-    console.log(
-        `ICE connection state change: ${peer.iceConnectionState}`);
+    console.log(`ICE connection state change: ${peer.iceConnectionState}`);
+    rtcState.iceConnection = peer.iceConnectionState
   });
 }
 
