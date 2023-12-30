@@ -3,6 +3,7 @@ import { Game } from "./room/game"
 import { SendBody } from "../model/sendBody"
 import { EffectCallback } from "../model/callBack"
 import { Direction } from "../model/direction"
+import { PlayerName } from "../model/playerName"
 
 export type RoomData = {
     isGameStart: boolean
@@ -14,7 +15,6 @@ type GameUpdateCallBack = (bodies: SendBody[]) => void
 type RoomUpdateCallBack = (data: RoomData) => void
 
 type Player = {
-    uid: string
     point: number
     gameUpdateCallback: GameUpdateCallBack
     roomUpdateCallback: RoomUpdateCallBack
@@ -33,11 +33,10 @@ export class Room {
         if( this.playerB ) this.playerB.roomUpdateCallback({ playerA, playerB, isGameStart: !!this.game })
     }
 
-    join(uid: string, gameUpdateCallback: GameUpdateCallBack, roomUpdateCallback: RoomUpdateCallBack, effectCallback: EffectCallback) {
+    join(gameUpdateCallback: GameUpdateCallBack, roomUpdateCallback: RoomUpdateCallBack, effectCallback: EffectCallback) {
         if (!this.playerA) {
-            console.log(`ユーザー[${uid}]が部屋にプレイヤーAとして入室しました！`)
+            console.log(`ユーザーが部屋にプレイヤーAとして入室しました！`)
             this.playerA = {
-                uid,
                 point: 0,
                 gameUpdateCallback,
                 roomUpdateCallback,
@@ -48,9 +47,8 @@ export class Room {
 
             return "playerA"
         } else if (!this.playerB) {
-            console.log(`ユーザー[${uid}]が部屋にプレイヤーBとして入室しました！`)
+            console.log(`ユーザーがプレイヤーBとして入室しました！`)
             this.playerB = {
-                uid,
                 point: 0,
                 gameUpdateCallback,
                 roomUpdateCallback,
@@ -65,24 +63,13 @@ export class Room {
         }
     }
 
-    leave(uid: string){
+    leave(playerName: PlayerName){
         this.stop()
 
-        const playerName = this.getPlayerNameFromUID(uid)
         this[playerName] = undefined
         console.log("プレイヤーが退出しました")
 
         this.noticeRoomUpdate()
-    }
-
-    private getPlayerNameFromUID(uid: string){
-        if( this.playerA?.uid == uid ){
-            return "playerA"
-        }else if( this.playerB?.uid == uid ){
-            return "playerB"
-        }else{
-            throw new Error("部屋に入ってません")
-        }
     }
 
     private sendTick?: NodeJS.Timeout
@@ -136,30 +123,15 @@ export class Room {
         this.noticeRoomUpdate()
     }
 
-    move(uid: string, direction: Direction){
-        if( !this.game ) return
-
-        const playerName = this.getPlayerNameFromUID(uid)
-        if( !playerName ) throw new Error("プレイヤーがいません！")
-
+    move(playerName: PlayerName, direction: Direction){
         this.game?.move( playerName, direction )
     }
 
-    lookAt(uid: string, { x, y }: Vector){
-        if( !this.game ) return
-
-        const playerName = this.getPlayerNameFromUID(uid)
-        if( !playerName ) throw new Error("プレイヤーがいません！！")
-
-        this.game.lookAt(playerName, { x, y })
+    lookAt(playerName: PlayerName, { x, y }: Vector){
+        this.game?.lookAt(playerName, { x, y })
     }
 
-    shoot(uid: string){
-        if( !this.game ) return
-
-        const playerName = this.getPlayerNameFromUID(uid)
-        if( !playerName ) throw new Error("プレイヤーがいません！！")
-
-        this.game.shoot(playerName)
+    shoot(playerName: PlayerName){
+        this.game?.shoot(playerName)
     }
 }

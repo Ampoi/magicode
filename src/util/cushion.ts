@@ -81,8 +81,6 @@ export class Host extends Main {
   private readonly room = new Room();
   public roomID: string | null = null;
 
-  private readonly roomPlayerID = "host"
-
   constructor() {
     super();
 
@@ -94,11 +92,8 @@ export class Host extends Main {
       this.join()
     });
 
-    const guestID = "guest"
-
     join.addEventListener("message", () => {
       const playerName = this.room.join(
-        guestID,
         (bodies) => {
           const data = JSON.stringify(bodies)
           updateBodies.send(data)
@@ -121,30 +116,29 @@ export class Host extends Main {
 
     move.addEventListener("message", (data) => {
       const direction: Direction = data.data
-      this.room.move(guestID, direction)
+      this.room.move("playerB", direction)
     })
 
     lookAt.addEventListener("message", (data) => {
       const point = JSON.parse(data.data)
-      this.room.lookAt(guestID, point)
+      this.room.lookAt("playerB", point)
     })
 
     shoot.addEventListener("message", () => {
-      this.room.shoot(guestID)
+      this.room.shoot("playerB")
     })
   }
 
-  public startGame(): void                  { this.room.start() }
-  public move(direction: Direction): void   { this.room.move(this.roomPlayerID, direction) }
-  public lookAt(x: number, y: number): void { this.room.lookAt(this.roomPlayerID, { x, y }) }
-  public shoot(): void                      { this.room.shoot(this.roomPlayerID) }
-  
   public join(): void {
     this.playerName = this.room.join(
-      this.roomPlayerID,
       this.updateBodies,
       this.updateRoomData,
       ( effect ) => { if( this.onEffect ){ this.onEffect(effect) } }
     )
   }
+
+  public startGame(): void                  { this.room.start() }
+  public move(direction: Direction): void   { this.room.move("playerA", direction) }
+  public lookAt(x: number, y: number): void { this.room.lookAt("playerA", { x, y }) }
+  public shoot(): void                      { this.room.shoot("playerA") }
 }
