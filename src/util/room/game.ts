@@ -96,8 +96,19 @@ export class Game {
 
         Events.on(this.engine, "collisionStart", (event) => {
             event.pairs.forEach(({ bodyA, bodyB }) => {
-                if (bodyA.label == "bullet") explodeQueue.push(bodyA)
-                if (bodyB.label == "bullet") explodeQueue.push(bodyB)
+                const bonus = 20
+                if (bodyA.label == "bullet"){
+                    const fromPlayer = this[(bodyA as Entity).customData?.from as PlayerName]
+                    if( !fromPlayer.customData ) throw new Error("カスタムのデータがないです！！")
+                    if( bodyB.label == "player" ) fromPlayer.customData.mp += bonus
+                    explodeQueue.push(bodyA)
+                }
+                if (bodyB.label == "bullet"){
+                    const fromPlayer = this[(bodyB as Entity).customData?.from as PlayerName]
+                    if( !fromPlayer.customData ) throw new Error("カスタムのデータがないです！！")
+                    if( bodyA.label == "player" ) fromPlayer.customData.mp += bonus
+                    explodeQueue.push(bodyB)
+                }
             })
         })
 
@@ -124,14 +135,14 @@ export class Game {
                     const normalisedVector = Vector.normalise(body.velocity)
                     
                     const aPos = Vector.add(body.position, Vector.mult(Vector.perp(normalisedVector, false), distance))
-                    const a = Bodies.circle(aPos.x, aPos.y, body.circleRadius ?? 10, { label: "bullet" })
-                    
+                    const a: Entity = Bodies.circle(aPos.x, aPos.y, body.circleRadius ?? 10, { label: "bullet" })
+                    a.customData = { from: playerName }
                     const aAngle = Vector.rotate(normalisedVector, Math.PI*angle/180)
                     Body.setVelocity(a, Vector.mult(aAngle, velocity))
                     
                     const bPos = Vector.add(body.position, Vector.mult(Vector.perp(normalisedVector, true), distance))
-                    const b = Bodies.circle(bPos.x, bPos.y, body.circleRadius ?? 10, { label: "bullet" })
-                    
+                    const b: Entity = Bodies.circle(bPos.x, bPos.y, body.circleRadius ?? 10, { label: "bullet" })
+                    b.customData = { from: playerName }
                     const bAngle = Vector.rotate(normalisedVector, Math.PI*(-angle/180))
                     Body.setVelocity(b, Vector.mult(bAngle, velocity))
                     

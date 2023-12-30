@@ -88,7 +88,7 @@ function copyID(){
 
 const keyIsPressed = { a: false, d: false }
 
-const effects: Effect[] = []
+let effects: Effect[] = []
 
 function formatNumber(num: number) {
     const minimalNum = Math.round(num * 10)/10
@@ -200,6 +200,9 @@ function drawPlayer(p: p5, hex: string, name: string, player: { point: number } 
 }
 
 function drawMenu(p: p5){
+  if( readyToUseCard ) readyToUseCard = true
+  if( effects.length > 0 ) effects = []
+
   p.background(0)
 
   p.fill(255)
@@ -240,7 +243,6 @@ onMounted(() => {
       if (event.key == "a" || event.key == "d") keyIsPressed[event.key] = false
     }
     p.mousePressed = () => {
-      console.log(cushion.roomData && cushion.roomData.isGameStart)
       if (cushion.roomData && cushion.roomData.isGameStart){
         cushion.shoot()
         if( readyToUseCard ){
