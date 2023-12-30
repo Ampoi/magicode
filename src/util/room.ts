@@ -106,7 +106,7 @@ export class Room {
                     bounds: body.bounds,
                     label: body.label,
                     circleRadius: body.circleRadius,
-                    name: (body as { name?: string }).name
+                    customData: (body as any).customData
                 }
             })
 

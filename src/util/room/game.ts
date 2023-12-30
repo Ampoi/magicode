@@ -17,6 +17,7 @@ const bounds = {
 }
 
 type OnGameEndCallback = ( winner?: PlayerName ) => void
+type Player = Body & { customData?: { [key: string]: any } }
 
 function transportPlayer( player: Body ){
     if( player.position.x < bounds.x.min ) Body.setPosition(player, { x: bounds.x.max, y: player.position.y })
@@ -32,8 +33,8 @@ export class Game {
     private readonly runner =  Runner.create()
     private readonly tps = 100
 
-    private readonly playerA = Bodies.circle(200, 300, 10, { label: "player", name: "playerA" } as any)
-    private readonly playerB = Bodies.circle(600, 100, 10, { label: "player", name: "playerB" } as any)
+    private readonly playerA: Player = Bodies.circle(200, 300, 10, { label: "player" })
+    private readonly playerB: Player = Bodies.circle(600, 100, 10, { label: "player" })
 
     readonly grounds = [
         Bodies.rectangle(200, 600, 200, 40, { isStatic: true }),
@@ -44,6 +45,9 @@ export class Game {
     private stop = false
 
     constructor( onGameEndCallback: OnGameEndCallback, effectCallback: EffectCallback ) {
+        this.playerA.customData = { name: "playerA" }
+        this.playerB.customData = { name: "playerB" }
+
         const explodeQueue: Body[] = []
 
         Events.on(this.engine, "beforeUpdate", () => {

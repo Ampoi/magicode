@@ -101,7 +101,7 @@ function drawGame(p: p5) {
     if (body.circleRadius) {
       switch (body.label) {
         case "player":
-          if( (body as unknown as { name: string }).name == "playerA" ){
+          if( body.customData?.name == "playerA" ){
             p.fill("#ff4733")
           }else{
             p.fill("#3080ff")
