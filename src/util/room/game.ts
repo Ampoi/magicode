@@ -19,9 +19,9 @@ const bounds = {
 type OnGameEndCallback = ( winner?: PlayerName ) => void
 type Player = Body & { customData?: { [key: string]: any } }
 
-function transportPlayer( player: Body ){
-    if( player.position.x < bounds.x.min ) Body.setPosition(player, { x: bounds.x.max, y: player.position.y })
-    if( bounds.x.max < player.position.x ) Body.setPosition(player, { x: bounds.x.min, y: player.position.y })
+function transportPlayer( player: Player ){
+    if( player.position.x < bounds.x.min ){ Body.setPosition(player, { x: bounds.x.max, y: player.position.y }); if( player.customData ){ player.customData.mp -= 30 }}
+    if( bounds.x.max < player.position.x ){ Body.setPosition(player, { x: bounds.x.min, y: player.position.y }); if( player.customData ){ player.customData.mp -= 30 }}
 }
 
 function isPlayerFallOut( player: Body ){
@@ -45,8 +45,14 @@ export class Game {
     private stop = false
 
     constructor( onGameEndCallback: OnGameEndCallback, effectCallback: EffectCallback ) {
-        this.playerA.customData = { name: "playerA" }
-        this.playerB.customData = { name: "playerB" }
+        this.playerA.customData = {
+            name: "playerA",
+            mp: 100
+        }
+        this.playerB.customData = {
+            name: "playerB",
+            mp: 100
+        }
 
         const explodeQueue: Body[] = []
 
@@ -58,6 +64,9 @@ export class Game {
                 World.remove(this.engine.world, explodeBody)
                 explodeQueue.splice(0, 1)
             })
+
+            if( this.playerA.customData && this.playerA.customData.mp < 100 ) this.playerA.customData.mp += 0.1
+            if( this.playerB.customData && this.playerB.customData.mp < 100 ) this.playerB.customData.mp += 0.1
 
             if( !this.stop ){
                 transportPlayer(this.playerA)
@@ -103,8 +112,12 @@ export class Game {
 
     shoot(playerName: PlayerName) {
         const player = this[playerName]
-        const bullet = createBullet(player)
-        Composite.add(this.engine.world, bullet)
+        const useMP = 20
+        if( player.customData && player.customData.mp > useMP ){
+            const bullet = createBullet(player)
+            Composite.add(this.engine.world, bullet)
+            player.customData.mp -= useMP
+        }
     }
 
     move(playerName: PlayerName, direction: Direction){
@@ -114,7 +127,13 @@ export class Game {
         ({
             left: () => Body.setVelocity(player, { x: -speed, y:player.velocity.y }),
             right: () => Body.setVelocity(player, { x: speed, y:player.velocity.y }),
-            up: () => Body.applyForce(player, player.position, { x: 0, y: -0.005 })
+            up: () => {
+                const useMP = 5
+                if( player.customData && player.customData.mp > useMP ){
+                    Body.applyForce(player, player.position, { x: 0, y: -0.01 })
+                    player.customData.mp -= useMP
+                }
+            }
         })[direction]()
     }
 

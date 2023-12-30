@@ -90,6 +90,12 @@ const keyIsPressed = { a: false, d: false }
 
 const effects: Effect[] = []
 
+function formatNumber(num: number) {
+    const minimalNum = Math.round(num * 10)/10
+    let numStrWithDecimalPoint = Number.isInteger(minimalNum) ? minimalNum.toString() + ".0" : minimalNum.toString()
+    return " ".repeat(5 - numStrWithDecimalPoint.length) + numStrWithDecimalPoint
+}
+
 cushion.onEffect = (effect) => {
   effects.push(effect)
 }
@@ -114,6 +120,7 @@ function drawGame(p: p5) {
           p.fill(255)
           break
       }
+
       p.circle(body.position.x, body.position.y, body.circleRadius * 2)
     } else {
       p.fill(255)
@@ -138,6 +145,18 @@ function drawGame(p: p5) {
       effects.splice(i, 1)
     }
   })
+
+  const player = cushion.bodies?.find(body => body.customData?.name == cushion.playerName)
+  p.noStroke()
+  p.rectMode(p.CORNER)
+  p.fill(50)
+  p.rect(100, 700, 500, 50)
+  p.fill(cushion.playerName == "playerA" ? "#ff4733" : "#3080ff")
+  p.rect(100, 700, 500*(player?.customData?.mp ?? 0)/100, 50)
+  
+  p.fill(255)
+  p.textAlign(p.LEFT)
+  p.text(formatNumber(player?.customData?.mp), 100+10, 700+35)
 
   if ( cushion.roomData && cushion.roomData.isGameStart && keyIsPressed.a) cushion.move("left")
   if ( cushion.roomData && cushion.roomData.isGameStart && keyIsPressed.d) cushion.move("right")
