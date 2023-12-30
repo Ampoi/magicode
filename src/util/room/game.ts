@@ -1,7 +1,9 @@
 import { Engine, Runner, Events, Body, Bodies, Composite, World, Vector } from "matter-js"
 import { createBullet } from "./createBullet"
 import { explode } from "./explode"
-import { EffectCallback } from "../room"
+import { EffectCallback } from "../../model/callBack"
+import { PlayerName } from "../../model/playerName"
+import { Direction } from "../../model/direction"
 
 const bounds = {
     x: {
@@ -14,7 +16,7 @@ const bounds = {
     }
 }
 
-type OnGameEndCallback = ( winner?: "playerA" | "playerB" ) => void
+type OnGameEndCallback = ( winner?: PlayerName ) => void
 
 export class Game {
     private readonly engine =  Engine.create()
@@ -88,13 +90,13 @@ export class Game {
         return Composite.allBodies(this.engine.world)
     }
 
-    shoot(playerName: "playerA" | "playerB") {
+    shoot(playerName: PlayerName) {
         const player = this[playerName]
         const bullet = createBullet(player)
         Composite.add(this.engine.world, bullet)
     }
 
-    move(playerName: "playerA" | "playerB", direction: "up" | "left" | "right"){
+    move(playerName: PlayerName, direction: Direction){
         const player = this[playerName]
         const speed = 4
 
@@ -111,7 +113,7 @@ export class Game {
         }
     }
 
-    lookAt(playerName: "playerA" | "playerB", { x, y }: Vector){
+    lookAt(playerName: PlayerName, { x, y }: Vector){
         const player = this[playerName]
 
         const angle = Math.atan2(player.position.y - y, x - player.position.x);

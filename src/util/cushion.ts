@@ -1,9 +1,10 @@
-import { Effect, Room, RoomData } from "./room";
+import { Room, RoomData } from "./room";
+import { Effect } from "../model/callBack"
 import { socket } from "../infra/socket.io";
 import { SendBody } from "../model/sendBody";
 import { effect, join, lookAt, move, sendOffer, shoot, startGame, updateBodies, updatePlayerName, updateRoomData } from "./peer";
-
-type PlayerName = "playerA" | "playerB";
+import { PlayerName } from "../model/playerName"
+import { Direction } from "../model/direction";
 
 export abstract class Main {
   public bodies: SendBody[] | null = null;
@@ -25,7 +26,7 @@ export abstract class Main {
   public onEffect: ((effect: Effect) => void) | null = null
 
   public abstract startGame(): void
-  public abstract move(direction: "up" | "left" | "right"): void
+  public abstract move(direction: Direction): void
   public abstract lookAt(x: number, y: number): void
   public abstract shoot(): void
   public abstract join(roomID: string): void
@@ -58,7 +59,7 @@ export class Client extends Main {
   public startGame(): void {
     startGame.send("")
   }
-  public move(direction: "up" | "left" | "right"): void {
+  public move(direction: Direction): void {
     move.send(direction)
   }
   public lookAt(x: number, y: number): void {
@@ -119,7 +120,7 @@ export class Host extends Main {
     })
 
     move.addEventListener("message", (data) => {
-      const direction: "left" | "right" | "up" = data.data
+      const direction: Direction = data.data
       this.room.move(guestID, direction)
     })
 
@@ -134,7 +135,7 @@ export class Host extends Main {
   }
 
   public startGame(): void { this.room.start() }
-  public move(direction: "up" | "left" | "right"): void { this.room.move(this.roomPlayerID, direction) }
+  public move(direction: Direction): void { this.room.move(this.roomPlayerID, direction) }
   public lookAt(x: number, y: number): void { this.room.lookAt(this.roomPlayerID, { x, y }) }
   public shoot(): void { this.room.shoot(this.roomPlayerID) }
   public join(): void { this.playerName = this.room.join(

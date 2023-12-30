@@ -64,7 +64,7 @@ import p5 from "p5"
 import { Host, Client } from "./util/cushion"
 import { serverAddress, changeServer } from "./util/serverAddress"
 import { rtcState } from './util/peer';
-import { Effect } from "./util/room"
+import { Effect } from "./model/callBack"
 
 const roomID = ref<string>()
 const showUI = ref(true)

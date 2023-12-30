@@ -1,6 +1,8 @@
 import type { Vector } from "matter-js"
 import { Game } from "./room/game"
 import { SendBody } from "../model/sendBody"
+import { EffectCallback } from "../model/callBack"
+import { Direction } from "../model/direction"
 
 export type RoomData = {
     isGameStart: boolean
@@ -10,9 +12,6 @@ export type RoomData = {
 
 type GameUpdateCallBack = (bodies: SendBody[]) => void
 type RoomUpdateCallBack = (data: RoomData) => void
-
-export type Effect = { x: number, y: number, size: number, type: "explode", time: 0, lifespan: number }
-export type EffectCallback = (effect: Effect) => void
 
 type Player = {
     uid: string
@@ -137,7 +136,7 @@ export class Room {
         this.noticeRoomUpdate()
     }
 
-    move(uid: string, direction: "up" | "left" | "right"){
+    move(uid: string, direction: Direction){
         if( !this.game ) return
 
         const playerName = this.getPlayerNameFromUID(uid)
