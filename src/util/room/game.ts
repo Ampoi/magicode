@@ -26,7 +26,6 @@ export class Game {
         Bodies.rectangle(200, 600, 200, 40, { isStatic: true }),
         Bodies.rectangle(600, 300, 200, 40, { isStatic: true }),
         Bodies.rectangle(1000, 700, 200, 40, { isStatic: true }),
-        Bodies.rectangle(400, -300, 800, 400, { isStatic: true })
     ]
 
     private stop = false
@@ -64,6 +63,12 @@ export class Game {
                     this.stop = true
                 }
             }
+
+            bodies.forEach(body => {
+                if( body.position.x < bounds.x.min || bounds.x.max < body.position.x ){
+                    World.remove(this.engine.world, body)
+                }
+            })
         })
 
         Events.on(this.engine, "collisionStart", (event) => {

@@ -71,12 +71,10 @@ export const rtcState = reactive<{
   iceGathering: RTCIceGatheringState
   peerConnection: RTCPeerConnectionState
   signaling: RTCSignalingState
-  iceConnection: RTCIceConnectionState
 }>({
   iceGathering: peer.iceGatheringState,
   peerConnection: peer.connectionState,
-  signaling: peer.signalingState,
-  iceConnection: peer.iceConnectionState
+  signaling: peer.signalingState
 })
 
 function registerPeerConnectionListeners() {
@@ -93,11 +91,6 @@ function registerPeerConnectionListeners() {
   peer.addEventListener('signalingstatechange', () => {
     console.log(`Signaling state change: ${peer.signalingState}`);
     rtcState.signaling = peer.signalingState
-  });
-
-  peer.addEventListener('iceconnectionstatechange ', () => {
-    console.log(`ICE connection state change: ${peer.iceConnectionState}`);
-    rtcState.iceConnection = peer.iceConnectionState
   });
 }
 

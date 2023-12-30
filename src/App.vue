@@ -1,11 +1,13 @@
 <template>
   <main class="w-screen h-screen bg-stone-800 text-white grid place-content-center font-spaceMono">
     <div class="flex flex-col shadow-2xl shadow-black">
-      <div class="flex flex-row gap-4 justify-center bg-black/40">
-        <input type="text" v-model="serverAddress" class="bg-transparent">
-        <button @click="changeServer">サーバーを変更する</button>
-      </div>
       <div ref="main" class="relative">
+        <div
+          class="top-0 absolute flex flex-row gap-4 justify-center w-full"
+          v-if="showUI">
+          <input type="text" v-model="serverAddress" class="bg-transparent">
+          <button @click="changeServer">サーバーを変更する</button>
+        </div>
         <div
           v-if="showUI"
           class="w-full absolute left-1/2 -translate-x-1/2 top-[8%] text-4xl flex flex-row gap-8 justify-center">
@@ -39,16 +41,18 @@
             Start
           </button>
         </div>
-      </div>
-      <div class="w-full flex flex-row text-white">
-        <div class="grow text-center">
-          {{ rtcState.iceGathering }}
-        </div>
-        <div class="grow text-center">
-          {{ rtcState.peerConnection }}
-        </div>
-        <div class="grow text-center">
-          {{ rtcState.signaling }}
+        <div
+          class="absolute bottom-0 w-full flex flex-row text-white"
+          v-if="showUI">
+          <div class="grow text-center">
+            {{ rtcState.iceGathering }}
+          </div>
+          <div class="grow text-center">
+            {{ rtcState.peerConnection }}
+          </div>
+          <div class="grow text-center">
+            {{ rtcState.signaling }}
+          </div>
         </div>
       </div>
     </div>
