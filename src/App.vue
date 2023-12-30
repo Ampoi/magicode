@@ -114,6 +114,7 @@ function drawMPGauge(p: p5, x: number, y: number){
   p.text(formatNumber(player?.customData?.mp), x+10, y+35)
 }
 
+let readyToUseCard = false
 function drawGame(p: p5) {
   p.background(0)
   p.noStroke()
@@ -161,6 +162,14 @@ function drawGame(p: p5) {
   })
 
   drawMPGauge(p, 100, 700)
+
+  if( readyToUseCard ){
+    p.rectMode(p.CORNER)
+    p.noFill()
+    p.strokeWeight(40)
+    p.stroke(cushion.playerName == "playerA" ? "#ff4733" : "#3080ff")
+    p.rect(0, 0, p.width, p.height)
+  }
 
   if ( cushion.roomData && cushion.roomData.isGameStart && keyIsPressed.a) cushion.move("left")
   if ( cushion.roomData && cushion.roomData.isGameStart && keyIsPressed.d) cushion.move("right")
@@ -223,13 +232,24 @@ onMounted(() => {
     }
     p.keyPressed = (event: KeyboardEvent) => {
       if (event.key == "w") cushion.move("up")
+      if (event.key == "r"){ readyToUseCard = !readyToUseCard }
+      if (event.key == " "){ cushion.useCard(); readyToUseCard = false }
       if (event.key == "a" || event.key == "d") keyIsPressed[event.key] = true
     }
     p.keyReleased = (event: KeyboardEvent) => {
       if (event.key == "a" || event.key == "d") keyIsPressed[event.key] = false
     }
-    p.mouseClicked = () => {
-      if (cushion.roomData && cushion.roomData.isGameStart) cushion.shoot()
+    p.mousePressed = () => {
+      console.log(cushion.roomData && cushion.roomData.isGameStart)
+      if (cushion.roomData && cushion.roomData.isGameStart){
+        cushion.shoot()
+        if( readyToUseCard ){
+          setTimeout(() => {
+            cushion.useCard()
+            readyToUseCard = false
+          }, 100)
+        }
+      }
     }
   }, main.value)
 })

@@ -134,4 +134,8 @@ export class Room {
     shoot(playerName: PlayerName){
         this.game?.shoot(playerName)
     }
+
+    useCard(playerName: PlayerName){
+        this.game?.useCard(playerName)
+    }
 }

@@ -110,6 +110,40 @@ export class Game {
         return Composite.allBodies(this.engine.world)
     }
 
+    useCard(playerName: PlayerName){
+        const useMP = 10
+        const distance = 30
+        const angle = 5
+
+        const player = this[playerName]
+        if( player.customData && player.customData.mp > useMP ){
+            let cardUsed = false
+            Composite.allBodies(this.engine.world).forEach((body: Entity) => {
+                if( body.label == "bullet" && body.customData?.from == playerName ){
+                    const velocity = Vector.magnitude(body.velocity)
+                    const normalisedVector = Vector.normalise(body.velocity)
+                    
+                    const aPos = Vector.add(body.position, Vector.mult(Vector.perp(normalisedVector, false), distance))
+                    const a = Bodies.circle(aPos.x, aPos.y, body.circleRadius ?? 10, { label: "bullet" })
+                    
+                    const aAngle = Vector.rotate(normalisedVector, Math.PI*angle/180)
+                    Body.setVelocity(a, Vector.mult(aAngle, velocity))
+                    
+                    const bPos = Vector.add(body.position, Vector.mult(Vector.perp(normalisedVector, true), distance))
+                    const b = Bodies.circle(bPos.x, bPos.y, body.circleRadius ?? 10, { label: "bullet" })
+                    
+                    const bAngle = Vector.rotate(normalisedVector, Math.PI*(-angle/180))
+                    Body.setVelocity(b, Vector.mult(bAngle, velocity))
+                    
+                    Composite.add(this.engine.world, [a, b])
+                    
+                    if( !cardUsed ) cardUsed = true
+                }
+            })
+            if( cardUsed ) player.customData.mp -= useMP
+        }
+    }
+
     shoot(playerName: PlayerName) {
         const player = this[playerName]
         const useMP = 20

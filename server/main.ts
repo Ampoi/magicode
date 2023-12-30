@@ -26,23 +26,6 @@ createServer(9648, (io, socket) => {
     if( !roomID ) throw new Error("roomIDがないっすよ")
     io.to(roomID).emit("iceCandidates", iceCandidates)
   })
-  //socket.on("startGame", () => {
-  //  if( !roomID ) return
-  //  io.to(roomID).emit("startGame", uid)
-  //})
-  //socket.on("move", (direction: "up" | "left" | "right") => {
-  //  if( !roomID ) return
-  //  io.to(roomID).emit("move", uid, direction)
-  //})
-  //socket.on("lookAt", (x: number, y: number) => {
-  //  if( !roomID ) return
-  //  io.to(roomID).emit("lookAt", uid, x, y)
-  //})
-  //socket.on("shoot", () => {
-  //  if( !roomID ) return
-  //  io.to(roomID).emit("shoot", uid)
-  //})
-
 }, {
   cors: {
       origin: "*",

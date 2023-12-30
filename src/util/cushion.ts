@@ -2,7 +2,7 @@ import { Room, RoomData } from "./room";
 import { Effect } from "../model/callBack"
 import { socket } from "../infra/socket.io";
 import { SendBody } from "../model/sendBody";
-import { effect, join, lookAt, move, sendOffer, shoot, startGame, updateBodies, updatePlayerName, updateRoomData } from "./peer";
+import { effect, join, lookAt, move, sendOffer, shoot, startGame, updateBodies, updatePlayerName, updateRoomData, useCard } from "./peer";
 import { PlayerName } from "../model/playerName"
 import { Direction } from "../model/direction";
 
@@ -29,6 +29,7 @@ export abstract class Main {
   public abstract move(direction: Direction): void
   public abstract lookAt(x: number, y: number): void
   public abstract shoot(): void
+  public abstract useCard(): void
   public abstract join(roomID: string): void
 }
 
@@ -68,6 +69,9 @@ export class Client extends Main {
   }
   public shoot(): void {
     shoot.send("")
+  }
+  public useCard(): void {
+    useCard.send("")
   }
   public async join(roomID: string) {
     await sendOffer(roomID)
@@ -127,6 +131,10 @@ export class Host extends Main {
     shoot.addEventListener("message", () => {
       this.room.shoot("playerB")
     })
+
+    useCard.addEventListener("message", () => {
+      this.room.useCard("playerB")
+    })
   }
 
   public join(): void {
@@ -140,5 +148,6 @@ export class Host extends Main {
   public startGame(): void                  { this.room.start() }
   public move(direction: Direction): void   { this.room.move("playerA", direction) }
   public lookAt(x: number, y: number): void { this.room.lookAt("playerA", { x, y }) }
-  public shoot(): void                      { this.room.shoot("playerA") }
+  public shoot(): void                      { this.room.shoot("playerA"); console.log("aa"); }
+  public useCard(): void                    { this.room.useCard("playerA") }
 }
