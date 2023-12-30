@@ -13,6 +13,7 @@ export const startGame        = peer.createDataChannel("startGame",         { ne
 export const move             = peer.createDataChannel("move",              { negotiated: true, id: 5 })
 export const lookAt           = peer.createDataChannel("lookAt",            { negotiated: true, id: 6 })
 export const shoot            = peer.createDataChannel("shoot",             { negotiated: true, id: 7 })
+export const effect           = peer.createDataChannel("effect",            { negotiated: true, id: 8 })
 
 const iceCandidates: RTCIceCandidate[] = [];
 peer.addEventListener("icecandidate", (event) => {

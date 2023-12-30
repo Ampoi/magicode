@@ -11,11 +11,15 @@ export type RoomData = {
 type GameUpdateCallBack = (bodies: SendBody[]) => void
 type RoomUpdateCallBack = (data: RoomData) => void
 
+export type Effect = { x: number, y: number, size: number, type: "explode", time: 0, lifespan: number }
+export type EffectCallback = (effect: Effect) => void
+
 type Player = {
     uid: string
     point: number
     gameUpdateCallback: GameUpdateCallBack
     roomUpdateCallback: RoomUpdateCallBack
+    effectCallback: EffectCallback
 }
 
 export class Room {
@@ -30,14 +34,15 @@ export class Room {
         if( this.playerB ) this.playerB.roomUpdateCallback({ playerA, playerB, isGameStart: !!this.game })
     }
 
-    join(uid: string, gameUpdateCallback: GameUpdateCallBack, roomUpdateCallback: RoomUpdateCallBack) {
+    join(uid: string, gameUpdateCallback: GameUpdateCallBack, roomUpdateCallback: RoomUpdateCallBack, effectCallback: EffectCallback) {
         if (!this.playerA) {
             console.log(`ユーザー[${uid}]が部屋にプレイヤーAとして入室しました！`)
             this.playerA = {
                 uid,
                 point: 0,
                 gameUpdateCallback,
-                roomUpdateCallback
+                roomUpdateCallback,
+                effectCallback
             }
 
             this.noticeRoomUpdate()
@@ -49,7 +54,8 @@ export class Room {
                 uid,
                 point: 0,
                 gameUpdateCallback,
-                roomUpdateCallback
+                roomUpdateCallback,
+                effectCallback
             }
 
             this.noticeRoomUpdate()
@@ -97,6 +103,9 @@ export class Room {
 
                 this.noticeRoomUpdate()
             }
+        }, (effect) => {
+            this.playerA?.effectCallback(effect)
+            this.playerB?.effectCallback(effect)
         })
 
         this.noticeRoomUpdate()

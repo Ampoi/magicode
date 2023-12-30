@@ -64,6 +64,7 @@ import p5 from "p5"
 import { Host, Client } from "./util/cushion"
 import { serverAddress, changeServer } from "./util/serverAddress"
 import { rtcState } from './util/peer';
+import { Effect } from "./util/room"
 
 const roomID = ref<string>()
 const showUI = ref(true)
@@ -87,8 +88,15 @@ function copyID(){
 
 const keyIsPressed = { a: false, d: false }
 
+const effects: Effect[] = []
+
+cushion.onEffect = (effect) => {
+  effects.push(effect)
+}
+
 function drawGame(p: p5) {
   p.background(0)
+  p.noStroke()
   cushion.bodies?.forEach(body => {
     if (body.circleRadius) {
       switch (body.label) {
@@ -113,6 +121,21 @@ function drawGame(p: p5) {
       const width = body.bounds.max.x - body.bounds.min.x
       const height = body.bounds.max.y - body.bounds.min.y
       p.rect(body.position.x, body.position.y, width, height)
+    }
+  })
+
+  effects.forEach((effect, i) => {
+    const t = (1 - (1 - effect.time / effect.lifespan) ** 2)
+    const nowSize = t * effect.size
+    p.noFill()
+    const color = p.color("white")
+    color.setAlpha((1 - effect.time / effect.lifespan)*255)
+    p.stroke(color)
+    p.strokeWeight((1-t)*effect.size/4)
+    p.circle(effect.x, effect.y, nowSize)
+    effect.time++
+    if( effect.time > effect.lifespan ){
+      effects.splice(i, 1)
     }
   })
 
@@ -159,6 +182,7 @@ onMounted(() => {
       } else {
         showUI.value = true
         p.background(0)
+
         p.fill(255)
         p.strokeWeight(0)
         p.textAlign(p.CENTER)

@@ -1,7 +1,7 @@
-import { Room, RoomData } from "./room";
+import { Effect, Room, RoomData } from "./room";
 import { socket } from "../infra/socket.io";
 import { SendBody } from "../model/sendBody";
-import { join, lookAt, move, sendOffer, shoot, startGame, updateBodies, updatePlayerName, updateRoomData } from "./peer";
+import { effect, join, lookAt, move, sendOffer, shoot, startGame, updateBodies, updatePlayerName, updateRoomData } from "./peer";
 
 type PlayerName = "playerA" | "playerB";
 
@@ -21,6 +21,8 @@ export abstract class Main {
     this.updateBodies = this.updateBodies.bind(this);
     this.updateRoomData = this.updateRoomData.bind(this);
   }
+
+  public onEffect: ((effect: Effect) => void) | null = null
 
   public abstract startGame(): void
   public abstract move(direction: "up" | "left" | "right"): void
@@ -44,6 +46,12 @@ export class Client extends Main {
     updatePlayerName.addEventListener("message", (data) => {
       const newPlayerName: PlayerName = data.data
       this.playerName = newPlayerName
+    })
+    effect.addEventListener("message", (data) => {
+      const effectData: Effect = JSON.parse(data.data)
+      if( this.onEffect ){
+        this.onEffect(effectData)
+      }
     })
   }
 
@@ -97,6 +105,10 @@ export class Host extends Main {
         (roomData) => {
           const data = JSON.stringify(roomData)
           updateRoomData.send(data)
+        },
+        (effectData) => {
+          const data = JSON.stringify(effectData)
+          effect.send(data)
         }
       )
       updatePlayerName.send(playerName)
@@ -125,5 +137,11 @@ export class Host extends Main {
   public move(direction: "up" | "left" | "right"): void { this.room.move(this.roomPlayerID, direction) }
   public lookAt(x: number, y: number): void { this.room.lookAt(this.roomPlayerID, { x, y }) }
   public shoot(): void { this.room.shoot(this.roomPlayerID) }
-  public join(): void { this.playerName = this.room.join(this.roomPlayerID, this.updateBodies, this.updateRoomData) }
+  public join(): void { this.playerName = this.room.join(
+      this.roomPlayerID,
+      this.updateBodies,
+      this.updateRoomData,
+      ( effect ) => { if( this.onEffect ){ this.onEffect(effect) } }
+    )
+  }
 }

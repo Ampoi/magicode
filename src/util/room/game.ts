@@ -1,6 +1,7 @@
 import { Engine, Runner, Events, Body, Bodies, Composite, World, Vector } from "matter-js"
 import { createBullet } from "./createBullet"
 import { explode } from "./explode"
+import { EffectCallback } from "../room"
 
 const bounds = {
     x: {
@@ -30,13 +31,14 @@ export class Game {
 
     private stop = false
 
-    constructor( onGameEndCallback: OnGameEndCallback ) {
+    constructor( onGameEndCallback: OnGameEndCallback, effectCallback: EffectCallback ) {
         const explodeQueue: Body[] = []
 
         Events.on(this.engine, "beforeUpdate", () => {
             const bodies = this.engine.world.bodies
             explodeQueue.forEach(explodeBody => {
                 explode(bodies, explodeBody.position, 10)
+                effectCallback({ x: explodeBody.position.x, y: explodeBody.position.y, size: 100, type: "explode", time: 0, lifespan: 20 })
                 World.remove(this.engine.world, explodeBody)
                 explodeQueue.splice(0, 1)
             })
