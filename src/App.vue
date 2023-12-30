@@ -100,6 +100,20 @@ cushion.onEffect = (effect) => {
   effects.push(effect)
 }
 
+function drawMPGauge(p: p5, x: number, y: number){
+  const player = cushion.bodies?.find(body => body.customData?.name == cushion.playerName)
+  p.noStroke()
+  p.rectMode(p.CORNER)
+  p.fill(50)
+  p.rect(x, y, 500, 50)
+  p.fill(cushion.playerName == "playerA" ? "#ff4733" : "#3080ff")
+  p.rect(x, y, 500*(player?.customData?.mp ?? 0)/100, 50)
+  
+  p.fill(255)
+  p.textAlign(p.LEFT)
+  p.text(formatNumber(player?.customData?.mp), x+10, y+35)
+}
+
 function drawGame(p: p5) {
   p.background(0)
   p.noStroke()
@@ -146,17 +160,7 @@ function drawGame(p: p5) {
     }
   })
 
-  const player = cushion.bodies?.find(body => body.customData?.name == cushion.playerName)
-  p.noStroke()
-  p.rectMode(p.CORNER)
-  p.fill(50)
-  p.rect(100, 700, 500, 50)
-  p.fill(cushion.playerName == "playerA" ? "#ff4733" : "#3080ff")
-  p.rect(100, 700, 500*(player?.customData?.mp ?? 0)/100, 50)
-  
-  p.fill(255)
-  p.textAlign(p.LEFT)
-  p.text(formatNumber(player?.customData?.mp), 100+10, 700+35)
+  drawMPGauge(p, 100, 700)
 
   if ( cushion.roomData && cushion.roomData.isGameStart && keyIsPressed.a) cushion.move("left")
   if ( cushion.roomData && cushion.roomData.isGameStart && keyIsPressed.d) cushion.move("right")
