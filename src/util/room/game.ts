@@ -73,8 +73,8 @@ export class Game {
                 transportPlayer(this.playerA)
                 transportPlayer(this.playerB)
 
-                const isPlayerAFallOut = isPlayerFallOut(this.playerA)
-                const isPlayerBFallOut = isPlayerFallOut(this.playerB)
+                const isPlayerAFallOut = isPlayerFallOut(this.playerA) || this.playerA.customData?.mp < 0
+                const isPlayerBFallOut = isPlayerFallOut(this.playerB) || this.playerB.customData?.mp < 0
                 
                 if( isPlayerAFallOut && isPlayerBFallOut ){
                     onGameEndCallback()
@@ -101,12 +101,14 @@ export class Game {
                 if (bodyA.label == "bullet"){
                     const fromPlayer = this[(bodyA as Entity).customData?.from as PlayerName]
                     if( !fromPlayer.customData ) throw new Error("カスタムのデータがないです！！")
+                    if( bodyB.label == "bullet" ) return
                     if( bodyB.label == "player" ) fromPlayer.customData.mp += bonus
                     explodeQueue.push(bodyA)
                 }
                 if (bodyB.label == "bullet"){
                     const fromPlayer = this[(bodyB as Entity).customData?.from as PlayerName]
                     if( !fromPlayer.customData ) throw new Error("カスタムのデータがないです！！")
+                    if( bodyA.label == "bullet" ) return
                     if( bodyA.label == "player" ) fromPlayer.customData.mp += bonus
                     explodeQueue.push(bodyB)
                 }
