@@ -66,6 +66,7 @@ import { serverAddress, changeServer } from "./util/serverAddress"
 import { rtcState } from './util/peer';
 import { Effect } from "./model/callBack"
 import { Card } from "./model/card"
+import { PlayerName } from './model/playerName';
 
 const roomID = ref<string>()
 const showUI = ref(true)
@@ -91,6 +92,11 @@ const keyIsPressed = { a: false, d: false }
 
 let effects: Effect[] = []
 
+const playerColor = {
+  playerA: "#00A7FF",
+  playerB: "#FF8C00"
+}
+
 function formatNumber(num: number) {
     const minimalNum = Math.round(num * 10)/10
     let numStrWithDecimalPoint = Number.isInteger(minimalNum) ? minimalNum.toString() + ".0" : minimalNum.toString()
@@ -107,7 +113,8 @@ function drawMPGauge(p: p5, x: number, y: number){
   p.rectMode(p.CORNER)
   p.fill(50)
   p.rect(x, y, 500, 50)
-  p.fill(cushion.playerName == "playerA" ? "#ff4733" : "#3080ff")
+  if( !cushion.playerName ) throw new Error("プレイヤー名が定義されてません！")
+  p.fill(playerColor[cushion.playerName])
   p.rect(x, y, 500*(player?.customData?.mp ?? 0)/100, 50)
   
   p.fill(255)
@@ -129,11 +136,8 @@ function drawGame(p: p5) {
     if (body.circleRadius) {
       switch (body.label) {
         case "player":
-          if( body.customData?.name == "playerA" ){
-            p.fill("#ff4733")
-          }else{
-            p.fill("#3080ff")
-          }
+          if( !body.customData?.name ) throw new Error("プレイヤーの名前が登録されてません！")
+          p.fill(playerColor[body.customData.name as PlayerName])
           break
         case "bullet":
           p.fill(0, 255, 0)
@@ -174,7 +178,8 @@ function drawGame(p: p5) {
     p.rectMode(p.CORNER)
     p.noFill()
     p.strokeWeight(40)
-    p.stroke(cushion.playerName == "playerA" ? "#ff4733" : "#3080ff")
+    if( !cushion.playerName ) throw new Error("プレイヤー名が定義されてません！")
+    p.stroke(playerColor[cushion.playerName])
     p.rect(0, 0, p.width, p.height)
   }
 
@@ -218,8 +223,8 @@ function drawMenu(p: p5){
   p.textSize(100)
   p.text("MagiCode", p.width / 2, p.height / 2 - 100)
   if( cushion.roomData ){
-    drawPlayer(p, "#ff4733", "Player A", cushion.roomData.playerA, p.width/2-100, p.height/2 + 20, "playerA" == cushion.playerName)
-    drawPlayer(p, "#3080ff", "Player B", cushion.roomData.playerB, p.width/2+100, p.height/2 + 20, "playerB" == cushion.playerName)
+    drawPlayer(p, playerColor.playerA, "Player A", cushion.roomData.playerA, p.width/2-100, p.height/2 + 20, "playerA" == cushion.playerName)
+    drawPlayer(p, playerColor.playerB, "Player B", cushion.roomData.playerB, p.width/2+100, p.height/2 + 20, "playerB" == cushion.playerName)
   }
 }
 
@@ -243,7 +248,7 @@ onMounted(() => {
     p.keyPressed = (event: KeyboardEvent) => {
       if (event.key == "w") cushion.move("up")
       if (event.key == "r"){ readyToUseCard = !readyToUseCard }
-      if (event.key == " "){ cushion.useCard(); readyToUseCard = false }
+      if (event.key == " "){ cushion.useCard("multiBullet"); readyToUseCard = false }
       if (event.key == "a" || event.key == "d") keyIsPressed[event.key] = true
     }
     p.keyReleased = (event: KeyboardEvent) => {
