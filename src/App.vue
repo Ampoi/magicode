@@ -125,7 +125,35 @@ function drawMPGauge(p: p5, x: number, y: number){
 const cards: { [key: number]: Card[] } = {
   100: [{ name: "multiBullet" }],
   200: [{ name: "multiBullet" }],
-  300: [{ name: "multiBullet" }]
+  300: [{ name: "multiBullet" }],
+  400: [{ name: "multiBullet" }],
+  500: [{ name: "multiBullet" }],
+}
+
+function drawUseCard(p: p5){
+  p.rectMode(p.CORNER)
+  p.noFill()
+  if( !cushion.playerName ) throw new Error("プレイヤー名が定義されてません！")
+  const drawPlayerColor = p.color(playerColor[cushion.playerName])
+  p.stroke(drawPlayerColor)
+  const width = 40
+  p.strokeWeight(width)
+  p.rect(0, 0, p.width, p.height)
+
+  p.noStroke()
+  const maxTime = Math.max(...Object.entries(cards).map(([time]) => Number(time)))
+  Object.entries(cards).reverse().forEach(([ time ]) => {
+    const i = (maxTime-Number(time))/100
+    const size = 100
+    p.fill(drawPlayerColor)
+    p.translate(p.width-(i+1)*size-width/2, p.height-size)
+    p.square(0, 0, size)
+    p.fill(255)
+    p.textAlign('center')
+    p.textSize(size/4)
+    p.text(time, size/2, size/4)
+    p.translate(-(p.width-(i+1)*size-width/2), -(p.height-size))
+  })
 }
 
 let readyToUseCard = false
@@ -174,14 +202,7 @@ function drawGame(p: p5) {
 
   drawMPGauge(p, 100, 700)
 
-  if( readyToUseCard ){
-    p.rectMode(p.CORNER)
-    p.noFill()
-    p.strokeWeight(40)
-    if( !cushion.playerName ) throw new Error("プレイヤー名が定義されてません！")
-    p.stroke(playerColor[cushion.playerName])
-    p.rect(0, 0, p.width, p.height)
-  }
+  if( readyToUseCard ) drawUseCard(p)
 
   if ( cushion.roomData && cushion.roomData.isGameStart && keyIsPressed.a) cushion.move("left")
   if ( cushion.roomData && cushion.roomData.isGameStart && keyIsPressed.d) cushion.move("right")
