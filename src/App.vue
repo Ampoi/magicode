@@ -65,6 +65,7 @@ import { Host, Client } from "./util/cushion"
 import { serverAddress, changeServer } from "./util/serverAddress"
 import { rtcState } from './util/peer';
 import { Effect } from "./model/callBack"
+import { Card } from "./model/card"
 
 const roomID = ref<string>()
 const showUI = ref(true)
@@ -112,6 +113,12 @@ function drawMPGauge(p: p5, x: number, y: number){
   p.fill(255)
   p.textAlign(p.LEFT)
   p.text(formatNumber(player?.customData?.mp), x+10, y+35)
+}
+
+const cards: { [key: number]: Card[] } = {
+  100: [{ name: "multiBullet" }],
+  200: [{ name: "multiBullet" }],
+  300: [{ name: "multiBullet" }]
 }
 
 let readyToUseCard = false
@@ -246,10 +253,14 @@ onMounted(() => {
       if (cushion.roomData && cushion.roomData.isGameStart){
         cushion.shoot()
         if( readyToUseCard ){
-          setTimeout(() => {
-            cushion.useCard()
-            readyToUseCard = false
-          }, 100)
+          Object.entries(cards).forEach(([ time, cards ]) => {
+            setTimeout(() => {
+              cards.forEach(card => {
+                cushion.useCard(card.name)
+              })
+              readyToUseCard = false
+            }, Number(time))
+          })
         }
       }
     }

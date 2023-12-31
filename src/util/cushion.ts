@@ -5,6 +5,7 @@ import { SendBody } from "../model/sendBody";
 import { effect, join, lookAt, move, sendOffer, shoot, startGame, updateBodies, updatePlayerName, updateRoomData, useCard } from "./peer";
 import { PlayerName } from "../model/playerName"
 import { Direction } from "../model/direction";
+import { Card } from "../model/card";
 
 export abstract class Main {
   public bodies: SendBody[] | null = null;
@@ -29,7 +30,7 @@ export abstract class Main {
   public abstract move(direction: Direction): void
   public abstract lookAt(x: number, y: number): void
   public abstract shoot(): void
-  public abstract useCard(): void
+  public abstract useCard(cardName: Card["name"]): void
   public abstract join(roomID: string): void
 }
 
@@ -70,8 +71,8 @@ export class Client extends Main {
   public shoot(): void {
     shoot.send("")
   }
-  public useCard(): void {
-    useCard.send("")
+  public useCard(cardName: Card["name"]): void {
+    useCard.send(cardName)
   }
   public async join(roomID: string) {
     await sendOffer(roomID)
@@ -132,8 +133,9 @@ export class Host extends Main {
       this.room.shoot("playerB")
     })
 
-    useCard.addEventListener("message", () => {
-      this.room.useCard("playerB")
+    useCard.addEventListener("message", (data) => {
+      const cardName: Card["name"] = data.data
+      this.room.useCard("playerB", cardName)
     })
   }
 
@@ -145,9 +147,9 @@ export class Host extends Main {
     )
   }
 
-  public startGame(): void                  { this.room.start() }
-  public move(direction: Direction): void   { this.room.move("playerA", direction) }
-  public lookAt(x: number, y: number): void { this.room.lookAt("playerA", { x, y }) }
-  public shoot(): void                      { this.room.shoot("playerA"); console.log("aa"); }
-  public useCard(): void                    { this.room.useCard("playerA") }
+  public startGame(): void                      { this.room.start() }
+  public move(direction: Direction): void       { this.room.move("playerA", direction) }
+  public lookAt(x: number, y: number): void     { this.room.lookAt("playerA", { x, y }) }
+  public shoot(): void                          { this.room.shoot("playerA"); console.log("aa"); }
+  public useCard(cardName: Card["name"]): void  { this.room.useCard("playerA", cardName) }
 }

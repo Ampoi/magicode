@@ -5,6 +5,7 @@ import { EffectCallback } from "../../model/callBack"
 import { PlayerName } from "../../model/playerName"
 import { Direction } from "../../model/direction"
 import { Entity } from "../../model/entity"
+import { Card } from "../../model/card"
 
 const bounds = {
     x: {
@@ -121,7 +122,7 @@ export class Game {
         return Composite.allBodies(this.engine.world)
     }
 
-    useCard(playerName: PlayerName){
+    useCard(playerName: PlayerName, cardName: Card["name"]){
         const useMP = 10
         const distance = 30
         const angle = 5
@@ -131,23 +132,26 @@ export class Game {
             let cardUsed = false
             Composite.allBodies(this.engine.world).forEach((body: Entity) => {
                 if( body.label == "bullet" && body.customData?.from == playerName ){
-                    const velocity = Vector.magnitude(body.velocity)
-                    const normalisedVector = Vector.normalise(body.velocity)
-                    
-                    const aPos = Vector.add(body.position, Vector.mult(Vector.perp(normalisedVector, false), distance))
-                    const a: Entity = Bodies.circle(aPos.x, aPos.y, body.circleRadius ?? 10, { label: "bullet" })
-                    a.customData = { from: playerName }
-                    const aAngle = Vector.rotate(normalisedVector, Math.PI*angle/180)
-                    Body.setVelocity(a, Vector.mult(aAngle, velocity))
-                    
-                    const bPos = Vector.add(body.position, Vector.mult(Vector.perp(normalisedVector, true), distance))
-                    const b: Entity = Bodies.circle(bPos.x, bPos.y, body.circleRadius ?? 10, { label: "bullet" })
-                    b.customData = { from: playerName }
-                    const bAngle = Vector.rotate(normalisedVector, Math.PI*(-angle/180))
-                    Body.setVelocity(b, Vector.mult(bAngle, velocity))
-                    
-                    Composite.add(this.engine.world, [a, b])
-                    
+                    switch( cardName ){
+                        case "multiBullet":
+                            const velocity = Vector.magnitude(body.velocity)
+                            const normalisedVector = Vector.normalise(body.velocity)
+                            
+                            const aPos = Vector.add(body.position, Vector.mult(Vector.perp(normalisedVector, false), distance))
+                            const a: Entity = Bodies.circle(aPos.x, aPos.y, body.circleRadius ?? 10, { label: "bullet" })
+                            a.customData = { from: playerName }
+                            const aAngle = Vector.rotate(normalisedVector, Math.PI*angle/180)
+                            Body.setVelocity(a, Vector.mult(aAngle, velocity))
+                            
+                            const bPos = Vector.add(body.position, Vector.mult(Vector.perp(normalisedVector, true), distance))
+                            const b: Entity = Bodies.circle(bPos.x, bPos.y, body.circleRadius ?? 10, { label: "bullet" })
+                            b.customData = { from: playerName }
+                            const bAngle = Vector.rotate(normalisedVector, Math.PI*(-angle/180))
+                            Body.setVelocity(b, Vector.mult(bAngle, velocity))
+                            
+                            Composite.add(this.engine.world, [a, b])
+                    }
+                        
                     if( !cardUsed ) cardUsed = true
                 }
             })

@@ -4,6 +4,7 @@ import { SendBody } from "../model/sendBody"
 import { EffectCallback } from "../model/callBack"
 import { Direction } from "../model/direction"
 import { PlayerName } from "../model/playerName"
+import { Card } from "../model/card"
 
 export type RoomData = {
     isGameStart: boolean
@@ -135,7 +136,7 @@ export class Room {
         this.game?.shoot(playerName)
     }
 
-    useCard(playerName: PlayerName){
-        this.game?.useCard(playerName)
+    useCard(playerName: PlayerName, cardName: Card["name"]){
+        this.game?.useCard(playerName, cardName)
     }
 }
