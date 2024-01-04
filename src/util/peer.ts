@@ -2,7 +2,11 @@ import { reactive } from "vue";
 import { socket } from "../infra/socket.io";
 
 const peer = new RTCPeerConnection({
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" }
+  ]
 });
 
 export const join             = peer.createDataChannel("join",              { negotiated: true, id: 0 })
